@@ -1,20 +1,26 @@
 /**
  * =====================================================
- *  EDIT DATA DI SINI
+ *  KONFIGURASI
  * =====================================================
  */
 
-const icecast = {
-  streamUrl: "https://s1.free-shoutcast.com/stream/18194",
-  defaultSong: "Vadanya Radio — Live"
-};
+// Ganti URL RSS sesuai portal berita favorit kamu
+// Contoh portal Indonesia yang punya RSS:
+//   ANTARA News   : https://www.antaranews.com/rss/terkini.xml
+//   ANTARA Hiburan: https://www.antaranews.com/rss/hiburan.xml
+//   CNN Indonesia : https://www.cnnindonesia.com/hiburan/rss
+//   Tempo         : https://rss.tempo.co/nasional
+//   Kumparan      : https://kumparan.com/rss
+const RSS_URL = "https://www.antaranews.com/rss/hiburan.xml";
 
-const newsList = [
-  { title: "Vadanya Radio resmi on air", excerpt: "Mulai sekarang kamu bisa dengerin siaran live dan request lagu lewat Instagram.", date: "13 Sep 2026", image: "logo.png", url: "#" },
-  { title: "Playlist galau & cinta lagi update", excerpt: "Koleksi lagu galau dan cinta-cintaan ditambah track baru minggu ini.", date: "12 Sep 2026", image: "logo.png", url: "#featured" },
-  { title: "Cara request lagu di Vadanya", excerpt: "Klik Open Request, langsung ke Instagram, kirim judul lagunya.", date: "11 Sep 2026", image: "logo.png", url: "#request" }
-];
+// Jumlah berita yang ditampilkan
+const NEWS_LIMIT = 6;
 
+// Proxy publik buat bypass CORS (gratis, bisa dipakai)
+// Kalau mau lebih reliable, buat Cloudflare Function sendiri
+const RSS_PROXY = "/rss?url=";
+
+/* ===== TRENDING ===== */
 const trendingSongs = [
   { title: "Teh Hijau", artist: "Tulus", platform: "both", spotifySearch: "Teh Hijau Tulus" },
   { title: "Sedia Aku Sebelum Hujan", artist: "Idgitaf", platform: "tt", spotifySearch: "Sedia Aku Sebelum Hujan" },
@@ -24,6 +30,7 @@ const trendingSongs = [
   { title: "Beauty and a Beat", artist: "Justin Bieber", platform: "both", spotifySearch: "Beauty and a Beat" }
 ];
 
+/* ===== PLAYLISTS ===== */
 const playlists = [
   { id: "3ALfwRrBuAuDGfYVTm12t0", title: "YANG GALAU COCOK NIH", desc: "Cocok buat yang lagi galau.", type: "featured", badge: "FEATURED" },
   { id: "5NcKcfEs2C6L77UtgEnVwr", title: "YG LAGI CINTA CINTAAN BET NIH", desc: "yg buat cinta cintaan cocok nih", type: "featured", badge: "FEATURED" },
@@ -31,7 +38,7 @@ const playlists = [
   { id: "4S4uJ8Z6ZzZ9TEJ2KwQqRR", title: "LAGU POP YANG ENAK DIDENGERIN EN & IND", desc: "Lagu cocok buat kamu saat berkendara.", type: "hits", badge: "HITS" }
 ];
 
-/* ===== THEME DARK / LIGHT ===== */
+/* ===== THEME ===== */
 (function initTheme() {
   const root = document.documentElement;
   const saved = localStorage.getItem("vadanya-theme");
@@ -56,100 +63,117 @@ if (themeToggle) {
   });
 }
 
-/* ===== RADIO / MINI PLAYER ===== */
-const audio = document.getElementById("radioAudio");
-const btn = document.getElementById("radioPlay");
-const miniTitle = document.getElementById("miniTitle");
-const miniArtist = document.getElementById("miniArtist");
-const volume = document.getElementById("radioVolume");
-
-function setNow(title, sub) {
-  if (miniTitle) miniTitle.textContent = title || "Vadanya Radio";
-  if (miniArtist) miniArtist.textContent = sub || "Siap diputar";
-}
-
-function setUI(playing) {
-  if (btn) btn.classList.toggle("playing", playing);
-  if (!playing) setNow("Vadanya Radio", "Siap diputar");
-}
-
-function startRadio() {
-  if (!audio) return;
-  const sep = icecast.streamUrl.includes("?") ? "&" : "?";
-  audio.src = icecast.streamUrl + sep + "t=" + Date.now();
-  audio.volume = volume ? parseFloat(volume.value) : 0.85;
-  audio.play()
-    .then(() => {
-      setUI(true);
-      setNow(icecast.defaultSong, "Live");
-      pollNow();
-    })
-    .catch(() => {
-      setUI(false);
-      setNow("Vadanya Radio", "Gagal connect");
-    });
-}
-
-function stopRadio() {
-  if (!audio) return;
-  audio.pause();
-  audio.removeAttribute("src");
-  audio.load();
-  setUI(false);
-  if (pollT) clearInterval(pollT);
-}
-
-let pollT = null;
-function pollNow() {
-  if (pollT) clearInterval(pollT);
-  pollT = setInterval(async () => {
-    try {
-      const r = await fetch("/nowplaying?t=" + Date.now(), { cache: "no-store" });
-      if (!r.ok) return;
-      const data = await r.json();
-      const t = data.nowplaying;
-      if (t) setNow(t, "Live · Vadanya");
-    } catch (_) {}
-  }, 5000);
-}
-
-if (btn) {
-  btn.addEventListener("click", () => {
-    if (audio && !audio.paused) stopRadio();
-    else startRadio();
-  });
-}
-
-if (volume && audio) {
-  volume.addEventListener("input", () => {
-    audio.volume = parseFloat(volume.value);
-  });
-}
-
-if (audio) {
-  audio.addEventListener("error", () => {
-    setUI(false);
-    setNow("Vadanya Radio", "Stream error");
-  });
-}
-
-/* ===== RENDER ===== */
-function renderNews() {
+/* =====================================================
+   BERITA OTOMATIS DARI RSS
+   ===================================================== */
+async function fetchNews() {
   const el = document.getElementById("newsGrid");
   if (!el) return;
-  el.innerHTML = newsList.map((n) => `
-    <a class="news-card" href="${n.url}" ${n.url.startsWith("http") ? 'target="_blank" rel="noopener"' : ""}>
-      <img class="news-thumb" src="${n.image}" alt="" loading="lazy" />
-      <div class="news-body">
-        <span class="news-date">${n.date}</span>
-        <h3 class="news-title">${n.title}</h3>
-        <p class="news-excerpt">${n.excerpt}</p>
-        <span class="news-more">Baca selengkapnya →</span>
-      </div>
-    </a>
-  `).join("");
+
+  let lastError = null;
+
+  for (const feedUrl of RSS_FEEDS) {
+    try {
+      const res = await fetch(RSS_PROXY + encodeURIComponent(feedUrl));
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      const text = await res.text();
+
+      const parser = new DOMParser();
+      const xml = parser.parseFromString(text, "text/xml");
+      const items = xml.querySelectorAll("item");
+
+      if (!items.length) throw new Error("Feed kosong");
+
+      const news = [];
+      for (let i = 0; i < Math.min(items.length, NEWS_LIMIT); i++) {
+        const it = items[i];
+        const title = it.querySelector("title")?.textContent?.trim() || "Tanpa judul";
+        const link = it.querySelector("link")?.textContent?.trim() || "#";
+        const pubDate = it.querySelector("pubDate")?.textContent?.trim() || "";
+        const desc = it.querySelector("description")?.textContent?.trim() || "";
+        const image = extractImage(it, desc);
+        news.push({ title, link, pubDate, desc, image });
+      }
+
+      renderNews(news);
+      return; // sukses, berhenti
+    } catch (err) {
+      lastError = err;
+      console.warn("Feed gagal:", feedUrl, err.message);
+    }
+  }
+
+  // Semua feed gagal
+  console.error("Semua feed gagal:", lastError);
+  el.innerHTML = `
+    <div class="news-error">
+      Gagal memuat berita. Cek koneksi atau coba refresh.<br />
+      <small>${lastError ? lastError.message : ""}</small>
+    </div>`;
 }
 
+function extractImage(item, desc) {
+  // 1. media:content
+  let el = item.querySelector("content[url]");
+  if (el) return el.getAttribute("url");
+
+  // 2. media:thumbnail
+  el = item.querySelector("thumbnail[url]");
+  if (el) return el.getAttribute("url");
+
+  // 3. enclosure
+  el = item.querySelector("enclosure[url]");
+  if (el) return el.getAttribute("url");
+
+  // 4. img src di description
+  const imgMatch = desc.match(/<img[^>]+src=["']([^"']+)["']/i);
+  if (imgMatch) return imgMatch[1];
+
+  return "logo.png"; // fallback
+}
+
+function formatDate(pubDate) {
+  if (!pubDate) return "";
+  try {
+    const d = new Date(pubDate);
+    if (isNaN(d.getTime())) return "";
+    const months = ["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Ags","Sep","Okt","Nov","Des"];
+    return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
+  } catch (_) {
+    return "";
+  }
+}
+
+function stripHtml(html) {
+  const tmp = document.createElement("div");
+  tmp.innerHTML = html || "";
+  return tmp.textContent || tmp.innerText || "";
+}
+
+function renderNews(news) {
+  const el = document.getElementById("newsGrid");
+  if (!el) return;
+
+  el.innerHTML = news.map((n) => {
+    const excerpt = stripHtml(n.desc).slice(0, 120);
+    const date = formatDate(n.pubDate);
+    return `
+      <a class="news-card" href="${n.link}" target="_blank" rel="noopener">
+        <img class="news-thumb" src="${n.image}" alt="" loading="lazy"
+          onerror="this.src='logo.png'" />
+        <div class="news-body">
+          ${date ? `<span class="news-date">${date}</span>` : ""}
+          <h3 class="news-title">${n.title}</h3>
+          <p class="news-excerpt">${excerpt}…</p>
+          <span class="news-more">Baca selengkapnya →</span>
+        </div>
+      </a>`;
+  }).join("");
+}
+
+/* =====================================================
+   RENDER TRENDING & PLAYLIST
+   ===================================================== */
 function renderTrending() {
   const el = document.getElementById("trendingGrid");
   if (!el) return;
@@ -197,129 +221,10 @@ function renderSection(containerId, filterType) {
   if (el) el.innerHTML = list.map(createEmbedCard).join("");
 }
 
-renderNews();
+/* ===== INIT ===== */
+fetchNews();
 renderTrending();
 renderSection("featuredGrid", "featured");
 renderSection("hitsGrid", "hits");
 renderSection("newGrid", "new");
 renderSection("allGrid", "all");
-
-/* ============================================================
-   CUSTOM NOW PLAYING EMBED
-   Auto-update dari /nowplaying (Cloudflare Pages Function)
-   ============================================================ */
-(function customNowPlaying() {
-  const embedEl  = document.getElementById("nowplayingEmbed");
-  const coverEl  = document.getElementById("npCover");
-  const titleEl  = document.getElementById("npTitle");
-  const artistEl = document.getElementById("npArtist");
-  const miniArt  = document.querySelector(".mini-art");
-  if (!embedEl || !coverEl || !titleEl || !artistEl) return;
-
-  const DEFAULT_COVER = "logo.png";
-  const ITUNES_API = "https://itunes.apple.com/search";
-  const coverCache = new Map();
-  let lastTrackKey = "";
-
-  function parseNowPlaying(raw) {
-    const text = (raw || "").trim();
-    if (!text) return null;
-    const idx = text.indexOf(" - ");
-    if (idx > -1) {
-      const artist = text.slice(0, idx).trim();
-      const title  = text.slice(idx + 3).trim();
-      if (artist && title) return { artist, title };
-    }
-    return { artist: "Vadanya Radio", title: text };
-  }
-
-  function setTrackUI(title, artist) {
-    titleEl.textContent  = title  || "Vadanya Radio";
-    artistEl.textContent = artist || "Live Streaming";
-  }
-
-  function setCover(url) {
-    if (!url) url = DEFAULT_COVER;
-    coverEl.style.opacity = "0";
-    const img = new Image();
-    img.onload = () => {
-      coverEl.src = url;
-      coverEl.style.opacity = "1";
-      if (miniArt) miniArt.src = url;
-    };
-    img.onerror = () => {
-      coverEl.src = DEFAULT_COVER;
-      coverEl.style.opacity = "1";
-      if (miniArt) miniArt.src = DEFAULT_COVER;
-    };
-    img.src = url;
-  }
-
-  async function fetchCover(title, artist) {
-    const query = `${artist} ${title}`.trim();
-    if (!query) return null;
-    if (coverCache.has(query)) return coverCache.get(query);
-    try {
-      const url = `${ITUNES_API}?term=${encodeURIComponent(query)}&media=music&entity=song&limit=1`;
-      const res = await fetch(url, { cache: "force-cache" });
-      if (!res.ok) return null;
-      const data = await res.json();
-      const item = data.results && data.results[0];
-      if (!item) return null;
-      const artwork = (item.artworkUrl100 || item.artworkUrl60 || "")
-        .replace(/\/\d+x\d+bb\./, "/300x300bb.");
-      coverCache.set(query, artwork);
-      return artwork;
-    } catch (_) {
-      return null;
-    }
-  }
-
-  async function updateNowPlaying(raw) {
-    const parsed = parseNowPlaying(raw);
-    if (!parsed) return;
-    const { title, artist } = parsed;
-    const trackKey = `${artist}::${title}`;
-    if (trackKey === lastTrackKey) return;
-    lastTrackKey = trackKey;
-
-    setTrackUI(title, artist);
-    setCover(DEFAULT_COVER);
-
-    const cover = await fetchCover(title, artist);
-    if (cover) setCover(cover);
-  }
-
-  function showEmbed(show) {
-    embedEl.classList.toggle("visible", show);
-    embedEl.classList.toggle("paused", !show);
-  }
-
-  async function poll() {
-    try {
-      const res = await fetch("/nowplaying?t=" + Date.now(), { cache: "no-store" });
-      if (!res.ok) return;
-      const data = await res.json();
-      if (data.nowplaying) updateNowPlaying(data.nowplaying);
-    } catch (_) {}
-  }
-
-  const mainAudio = document.getElementById("radioAudio");
-  const playBtn   = document.getElementById("radioPlay");
-
-  if (mainAudio) {
-    mainAudio.addEventListener("play",  () => showEmbed(true));
-    mainAudio.addEventListener("pause", () => showEmbed(false));
-  }
-  if (playBtn) {
-    playBtn.addEventListener("click", () => {
-      setTimeout(() => {
-        if (mainAudio && !mainAudio.paused) showEmbed(true);
-        else showEmbed(false);
-      }, 50);
-    });
-  }
-
-  poll();
-  setInterval(poll, 5000);
-})();
