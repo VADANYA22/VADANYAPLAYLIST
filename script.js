@@ -12,15 +12,6 @@ const RSS_FEEDS = [
 const NEWS_LIMIT = 6;
 const RSS_PROXY = "/rss?url=";
 
-const trendingSongs = [
-  { title: "Teh Hijau", artist: "Tulus", platform: "both", spotifySearch: "Teh Hijau Tulus" },
-  { title: "Sedia Aku Sebelum Hujan", artist: "Idgitaf", platform: "tt", spotifySearch: "Sedia Aku Sebelum Hujan" },
-  { title: "Ada titik-titik di ujung doa", artist: "Sal Priadi", platform: "both", spotifySearch: "Ada titik-titik di ujung doa" },
-  { title: "Foto kita blur", artist: "Sal Priadi", platform: "both", spotifySearch: "Foto kita blur" },
-  { title: "Bandung", artist: "Yura Yunita", platform: "both", spotifySearch: "Bandung Yura Yunita" },
-  { title: "Beauty and a Beat", artist: "Justin Bieber", platform: "both", spotifySearch: "Beauty and a Beat" }
-];
-
 const playlists = [
   { id: "3ALfwRrBuAuDGfYVTm12t0", title: "YANG GALAU COCOK NIH", desc: "Cocok buat yang lagi galau.", type: "featured", badge: "FEATURED" },
   { id: "5NcKcfEs2C6L77UtgEnVwr", title: "YG LAGI CINTA CINTAAN BET NIH", desc: "yg buat cinta cintaan cocok nih", type: "featured", badge: "FEATURED" },
@@ -117,25 +108,21 @@ async function fetchCover(title, artist) {
 async function fetchLyrics(title, artist) {
   if (!lyricsText) return;
   lyricsText.textContent = "Mencari lirik…";
-
   try {
-    const q =
+    let res = await fetch(
       "https://lrclib.net/api/get?artist_name=" +
-      encodeURIComponent(artist) +
-      "&track_name=" +
-      encodeURIComponent(title);
-
-    let res = await fetch(q);
+        encodeURIComponent(artist) +
+        "&track_name=" +
+        encodeURIComponent(title)
+    );
     if (res.ok) {
       const data = await res.json();
       const plain = (data.plainLyrics || data.syncedLyrics || "").trim();
       if (plain) {
-        const cleaned = plain.replace(/^\[.*?\]\s*/gm, "").trim();
-        lyricsText.textContent = cleaned || "Lirik tidak ditemukan.";
+        lyricsText.textContent = plain.replace(/^\[.*?\]\s*/gm, "").trim() || "Lirik tidak ditemukan.";
         return;
       }
     }
-
     res = await fetch(
       "https://api.lyrics.ovh/v1/" +
         encodeURIComponent(artist) +
@@ -149,7 +136,6 @@ async function fetchLyrics(title, artist) {
         return;
       }
     }
-
     lyricsText.textContent = "Lirik tidak ditemukan untuk lagu ini.";
   } catch (_) {
     lyricsText.textContent = "Gagal memuat lirik.";
@@ -163,7 +149,6 @@ async function updateNowPlaying(raw) {
   const key = artist + "::" + title;
   if (key === lastKey) return;
   lastKey = key;
-
   setTrack(title, artist);
   setCover(DEFAULT_COVER);
   const cover = await fetchCover(title, artist);
@@ -251,6 +236,38 @@ async function pollListeners() {
 pollListeners();
 setInterval(pollListeners, 15000);
 
+/* ===== TRENDING AUTO (iTunes) ===== */
+async function loadTrending() {
+  const el = document.getElementById("trendingGrid");
+  if (!el) return;
+  el.innerHTML = `<div class="news-loading">Memuat chart…</div>`;
+  try {
+    const r = await fetch("/trending?t=" + Date.now(), { cache: "no-store" });
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    const data = await r.json();
+    if (!data.ok || !data.songs?.length) throw new Error("Data kosong");
+
+    el.innerHTML = data.songs.map((song, i) => {
+      const searchUrl =
+        "https://open.spotify.com/search/" +
+        encodeURIComponent(song.spotifySearch || `${song.title} ${song.artist}`);
+      return `
+        <div class="trend-card">
+          <div class="trend-top">
+            <span class="trend-rank">${String(i + 1).padStart(2, "0")}</span>
+            <div class="trend-info">
+              <div class="trend-title">${song.title}</div>
+              <div class="trend-artist">${song.artist}</div>
+            </div>
+          </div>
+          <a class="trend-btn spotify" href="${searchUrl}" target="_blank" rel="noopener">Cari di Spotify</a>
+        </div>`;
+    }).join("");
+  } catch (err) {
+    el.innerHTML = `<div class="news-error">Gagal memuat chart.<br /><small>${err.message}</small></div>`;
+  }
+}
+
 /* ===== NEWS ===== */
 async function fetchNews() {
   const el = document.getElementById("newsGrid");
@@ -268,11 +285,13 @@ async function fetchNews() {
       const news = [];
       for (let i = 0; i < Math.min(items.length, NEWS_LIMIT); i++) {
         const it = items[i];
-        const title = it.querySelector("title")?.textContent?.trim() || "Tanpa judul";
-        const link = it.querySelector("link")?.textContent?.trim() || "#";
-        const pubDate = it.querySelector("pubDate")?.textContent?.trim() || "";
-        const desc = it.querySelector("description")?.textContent?.trim() || "";
-        news.push({ title, link, pubDate, desc, image: extractImage(it, desc) });
+        news.push({
+          title: it.querySelector("title")?.textContent?.trim() || "Tanpa judul",
+          link: it.querySelector("link")?.textContent?.trim() || "#",
+          pubDate: it.querySelector("pubDate")?.textContent?.trim() || "",
+          desc: it.querySelector("description")?.textContent?.trim() || "",
+          image: extractImage(it, it.querySelector("description")?.textContent || "")
+        });
       }
       renderNews(news);
       return;
@@ -290,9 +309,8 @@ function extractImage(item, desc) {
   if (el) return el.getAttribute("url");
   el = item.querySelector("enclosure[url]");
   if (el) return el.getAttribute("url");
-  const imgMatch = desc.match(/<img[^>]+src=["']([^"']+)["']/i);
-  if (imgMatch) return imgMatch[1];
-  return "logo.png";
+  const m = desc.match(/<img[^>]+src=["']([^"']+)["']/i);
+  return m ? m[1] : "logo.png";
 }
 
 function formatDate(pubDate) {
@@ -332,30 +350,7 @@ function renderNews(news) {
   }).join("");
 }
 
-/* ===== TRENDING & PLAYLIST ===== */
-function renderTrending() {
-  const el = document.getElementById("trendingGrid");
-  if (!el) return;
-  el.innerHTML = trendingSongs.map((song, i) => {
-    const platforms = [];
-    if (song.platform === "ig" || song.platform === "both") platforms.push('<span class="platform-tag ig">IG</span>');
-    if (song.platform === "tt" || song.platform === "both") platforms.push('<span class="platform-tag tt">TikTok</span>');
-    const searchUrl = `https://open.spotify.com/search/${encodeURIComponent(song.spotifySearch)}`;
-    return `
-      <div class="trend-card">
-        <div class="trend-top">
-          <span class="trend-rank">${String(i + 1).padStart(2, "0")}</span>
-          <div class="trend-info">
-            <div class="trend-title">${song.title}</div>
-            <div class="trend-artist">${song.artist}</div>
-          </div>
-          <div class="trend-platform">${platforms.join("")}</div>
-        </div>
-        <a class="trend-btn spotify" href="${searchUrl}" target="_blank" rel="noopener">Cari di Spotify</a>
-      </div>`;
-  }).join("");
-}
-
+/* ===== PLAYLIST ===== */
 function createEmbedCard(p) {
   const badgeClass = p.type === "featured" ? "featured" : p.type === "hits" ? "hits" : "new";
   return `
@@ -380,7 +375,7 @@ function renderSection(containerId, filterType) {
 }
 
 fetchNews();
-renderTrending();
+loadTrending();
 renderSection("featuredGrid", "featured");
 renderSection("hitsGrid", "hits");
 renderSection("newGrid", "new");
