@@ -1,7 +1,15 @@
+/**
+ * =====================================================
+ *  BERITA HIBURAN
+ * =====================================================
+ * Urutan = prioritas. Kalau feed 1 gagal, coba feed 2, dst.
+ */
 const RSS_FEEDS = [
-  "https://www.antaranews.com/rss/hiburan.xml",
-  "https://www.antaranews.com/rss/terkini.xml"
+  "https://www.antaranews.com/rss/hiburan.xml",           // ANTARA Hiburan
+  "https://www.cnnindonesia.com/hiburan/rss",             // CNN Indonesia Hiburan
+  "https://www.antaranews.com/rss/lifestyle.xml",         // Lifestyle (backup)
 ];
+
 const NEWS_LIMIT = 6;
 const RSS_PROXY = "/rss?url=";
 
