@@ -9,14 +9,12 @@ const DEFAULT_COVER = "logo.png";
 
 /* THEME */
 (function () {
-  const root = document.documentElement;
   const saved = localStorage.getItem("vadanya-theme");
   const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
   if ((saved || (prefersDark ? "dark" : "light")) === "dark") {
-    root.setAttribute("data-theme", "dark");
+    document.documentElement.setAttribute("data-theme", "dark");
   }
 })();
-
 document.getElementById("themeToggle")?.addEventListener("click", () => {
   const root = document.documentElement;
   const isDark = root.getAttribute("data-theme") === "dark";
@@ -40,9 +38,7 @@ const lyricsText = document.getElementById("lyricsText");
 const coverCache = new Map();
 let lastKey = "";
 
-function setPlaying(on) {
-  btn?.classList.toggle("playing", on);
-}
+function setPlaying(on) { btn?.classList.toggle("playing", on); }
 function setTrack(title, artist) {
   if (cpTitle) cpTitle.textContent = title || "Vadanya Radio";
   if (cpArtist) cpArtist.textContent = artist || "Live";
@@ -62,7 +58,6 @@ function parseNow(raw) {
   if (i > -1) return { artist: t.slice(0, i).trim(), title: t.slice(i + 3).trim() };
   return { artist: "Vadanya Radio", title: t };
 }
-
 async function fetchCover(title, artist) {
   const q = `${artist} ${title}`.trim();
   if (!q) return null;
@@ -78,20 +73,15 @@ async function fetchCover(title, artist) {
     const art = item.artworkUrl100.replace(/\/\d+x\d+bb\./, "/300x300bb.");
     coverCache.set(q, art);
     return art;
-  } catch (_) {
-    return null;
-  }
+  } catch (_) { return null; }
 }
-
 async function fetchLyrics(title, artist) {
   if (!lyricsText) return;
   lyricsText.textContent = "Mencari lirik…";
   try {
     let res = await fetch(
-      "https://lrclib.net/api/get?artist_name=" +
-        encodeURIComponent(artist) +
-        "&track_name=" +
-        encodeURIComponent(title)
+      "https://lrclib.net/api/get?artist_name=" + encodeURIComponent(artist) +
+      "&track_name=" + encodeURIComponent(title)
     );
     if (res.ok) {
       const data = await res.json();
@@ -106,17 +96,13 @@ async function fetchLyrics(title, artist) {
     );
     if (res.ok) {
       const data = await res.json();
-      if (data.lyrics) {
-        lyricsText.textContent = data.lyrics.trim();
-        return;
-      }
+      if (data.lyrics) { lyricsText.textContent = data.lyrics.trim(); return; }
     }
     lyricsText.textContent = "Lirik tidak ditemukan untuk lagu ini.";
   } catch (_) {
     lyricsText.textContent = "Gagal memuat lirik.";
   }
 }
-
 async function updateNowPlaying(raw) {
   const parsed = parseNow(raw);
   if (!parsed) return;
@@ -130,52 +116,29 @@ async function updateNowPlaying(raw) {
   if (cover) setCover(cover);
   await fetchLyrics(title, artist);
 }
-
 async function pollNow() {
   try {
     const r = await fetch("/nowplaying?t=" + Date.now(), { cache: "no-store" });
     if (r.ok) {
       const data = await r.json();
-      if (data.nowplaying) {
-        await updateNowPlaying(data.nowplaying);
-        return;
-      }
+      if (data.nowplaying) await updateNowPlaying(data.nowplaying);
     }
   } catch (_) {}
 }
-
 function start() {
   if (!audio) return;
   const sep = STREAM_URL.includes("?") ? "&" : "?";
   audio.src = STREAM_URL + sep + "t=" + Date.now();
   audio.volume = vol ? +vol.value : 0.85;
-  audio.play()
-    .then(() => {
-      setPlaying(true);
-      pollNow();
-    })
-    .catch(() => {
-      setPlaying(false);
-      setTrack("Vadanya Radio", "Gagal connect");
-    });
+  audio.play().then(() => { setPlaying(true); pollNow(); })
+    .catch(() => { setPlaying(false); setTrack("Vadanya Radio", "Gagal connect"); });
 }
-
 function stop() {
   if (!audio) return;
-  audio.pause();
-  audio.removeAttribute("src");
-  audio.load();
-  setPlaying(false);
+  audio.pause(); audio.removeAttribute("src"); audio.load(); setPlaying(false);
 }
-
-btn?.addEventListener("click", () => {
-  if (audio && !audio.paused) stop();
-  else start();
-});
-vol?.addEventListener("input", () => {
-  if (audio) audio.volume = +vol.value;
-});
-
+btn?.addEventListener("click", () => { if (audio && !audio.paused) stop(); else start(); });
+vol?.addEventListener("input", () => { if (audio) audio.volume = +vol.value; });
 pollNow();
 setInterval(pollNow, 5000);
 
@@ -192,7 +155,7 @@ async function pollListeners() {
 pollListeners();
 setInterval(pollListeners, 15000);
 
-/* TRENDING (Deezer) */
+/* TRENDING */
 async function loadTrending() {
   const el = document.getElementById("trendingGrid");
   if (!el) return;
@@ -201,11 +164,10 @@ async function loadTrending() {
     const r = await fetch("/trending?t=" + Date.now(), { cache: "no-store" });
     if (!r.ok) throw new Error("HTTP " + r.status);
     const data = await r.json();
-    if (!data.ok || !data.songs?.length) throw new Error("Data kosong");
-    el.innerHTML = data.songs
-      .map((song, i) => {
-        const q = encodeURIComponent(song.spotifySearch || `${song.title} ${song.artist}`);
-        return `
+    if (!data.ok || !data.songs?.length) throw new Error(data.error || "Data kosong");
+    el.innerHTML = data.songs.map((song, i) => {
+      const q = encodeURIComponent(song.spotifySearch || `${song.title} ${song.artist}`);
+      return `
         <div class="trend-card">
           <div class="trend-top">
             <span class="trend-rank">${String(i + 1).padStart(2, "0")}</span>
@@ -216,14 +178,13 @@ async function loadTrending() {
           </div>
           <a class="trend-btn spotify" href="https://open.spotify.com/search/${q}" target="_blank" rel="noopener">Cari di Spotify</a>
         </div>`;
-      })
-      .join("");
+    }).join("");
   } catch (err) {
     el.innerHTML = `<div class="news-error">Gagal memuat chart.<br /><small>${err.message}</small></div>`;
   }
 }
 
-/* PLAYLISTS (Spotify via /playlists) */
+/* PLAYLISTS */
 async function loadPlaylists() {
   const el = document.getElementById("autoPlaylistGrid");
   if (!el) return;
@@ -233,12 +194,10 @@ async function loadPlaylists() {
     if (!r.ok) throw new Error("HTTP " + r.status);
     const data = await r.json();
     if (!data.ok || !data.playlists?.length) throw new Error(data.error || "Data kosong");
-
-    el.innerHTML = data.playlists
-      .map((p) => {
-        const cover = p.cover || "logo.png";
-        const link = p.link || `https://open.spotify.com/playlist/${p.id}`;
-        return `
+    el.innerHTML = data.playlists.map((p) => {
+      const cover = p.cover || "logo.png";
+      const link = p.link || `https://open.spotify.com/playlist/${p.id}`;
+      return `
         <div class="playlist-card" data-id="${p.id}">
           <img class="playlist-cover" src="${cover}" alt="" loading="lazy" onerror="this.src='logo.png'" />
           <div class="playlist-body">
@@ -250,16 +209,13 @@ async function loadPlaylists() {
             </div>
           </div>
           <div class="playlist-embed-wrap">
-            <iframe
-              title="${p.title}"
+            <iframe title="${p.title}"
               src="https://open.spotify.com/embed/playlist/${p.id}?utm_source=generator&theme=0"
               allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
               loading="lazy"></iframe>
           </div>
         </div>`;
-      })
-      .join("");
-
+    }).join("");
     el.querySelectorAll("[data-play]").forEach((b) => {
       b.addEventListener("click", () => {
         const card = b.closest(".playlist-card");
@@ -291,67 +247,40 @@ async function fetchNews() {
       for (let i = 0; i < Math.min(items.length, NEWS_LIMIT); i++) {
         const it = items[i];
         const desc = it.querySelector("description")?.textContent || "";
+        let img = it.querySelector("content[url], thumbnail[url], enclosure[url]");
+        img = img ? img.getAttribute("url") : (desc.match(/<img[^>]+src=["']([^"']+)["']/i) || [])[1] || "logo.png";
         news.push({
           title: it.querySelector("title")?.textContent?.trim() || "Tanpa judul",
           link: it.querySelector("link")?.textContent?.trim() || "#",
           pubDate: it.querySelector("pubDate")?.textContent?.trim() || "",
-          desc,
-          image: extractImage(it, desc)
+          desc, image: img
         });
       }
-      renderNews(news);
+      el.innerHTML = news.map((n) => {
+        const excerpt = (() => { const t = document.createElement("div"); t.innerHTML = n.desc; return (t.textContent || "").slice(0, 120); })();
+        let date = "";
+        try {
+          const d = new Date(n.pubDate);
+          if (!isNaN(d.getTime())) {
+            const m = ["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Ags","Sep","Okt","Nov","Des"];
+            date = `${d.getDate()} ${m[d.getMonth()]} ${d.getFullYear()}`;
+          }
+        } catch (_) {}
+        return `
+          <a class="news-card" href="${n.link}" target="_blank" rel="noopener">
+            <img class="news-thumb" src="${n.image}" alt="" loading="lazy" onerror="this.src='logo.png'" />
+            <div class="news-body">
+              ${date ? `<span class="news-date">${date}</span>` : ""}
+              <h3 class="news-title">${n.title}</h3>
+              <p class="news-excerpt">${excerpt}…</p>
+              <span class="news-more">Baca selengkapnya →</span>
+            </div>
+          </a>`;
+      }).join("");
       return;
-    } catch (err) {
-      lastError = err;
-    }
+    } catch (err) { lastError = err; }
   }
   el.innerHTML = `<div class="news-error">Gagal memuat berita.<br /><small>${lastError?.message || ""}</small></div>`;
-}
-
-function extractImage(item, desc) {
-  let el = item.querySelector("content[url], thumbnail[url], enclosure[url]");
-  if (el) return el.getAttribute("url");
-  const m = desc.match(/<img[^>]+src=["']([^"']+)["']/i);
-  return m ? m[1] : "logo.png";
-}
-
-function formatDate(pubDate) {
-  if (!pubDate) return "";
-  try {
-    const d = new Date(pubDate);
-    if (isNaN(d.getTime())) return "";
-    const months = ["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Ags","Sep","Okt","Nov","Des"];
-    return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
-  } catch (_) {
-    return "";
-  }
-}
-
-function stripHtml(html) {
-  const tmp = document.createElement("div");
-  tmp.innerHTML = html || "";
-  return tmp.textContent || "";
-}
-
-function renderNews(news) {
-  const el = document.getElementById("newsGrid");
-  if (!el) return;
-  el.innerHTML = news
-    .map((n) => {
-      const excerpt = stripHtml(n.desc).slice(0, 120);
-      const date = formatDate(n.pubDate);
-      return `
-      <a class="news-card" href="${n.link}" target="_blank" rel="noopener">
-        <img class="news-thumb" src="${n.image}" alt="" loading="lazy" onerror="this.src='logo.png'" />
-        <div class="news-body">
-          ${date ? `<span class="news-date">${date}</span>` : ""}
-          <h3 class="news-title">${n.title}</h3>
-          <p class="news-excerpt">${excerpt}…</p>
-          <span class="news-more">Baca selengkapnya →</span>
-        </div>
-      </a>`;
-    })
-    .join("");
 }
 
 fetchNews();

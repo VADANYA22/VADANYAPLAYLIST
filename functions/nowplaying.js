@@ -7,7 +7,7 @@ export async function onRequest() {
     const data = await res.json();
     const song = (data.songtitle || "").trim();
     if (song) {
-      return json({ nowplaying: song, listeners: data.currentlisteners ?? null, ok: true });
+      return json({ nowplaying: song, ok: true });
     }
   } catch (e) {
     return json({ nowplaying: "Vadanya Radio - Live", ok: false, error: String(e) });
