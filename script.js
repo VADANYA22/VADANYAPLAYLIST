@@ -1,52 +1,35 @@
-/**
- * =====================================================
- *  KONFIGURASI
- * =====================================================
- */
 const STREAM_URL = "https://s1.free-shoutcast.com/stream/18194";
-
 const RSS_FEEDS = [
   "https://www.antaranews.com/rss/hiburan.xml",
   "https://www.cnnindonesia.com/hiburan/rss"
 ];
 const NEWS_LIMIT = 6;
 const RSS_PROXY = "/rss?url=";
-
-const playlists = [
-  { id: "3ALfwRrBuAuDGfYVTm12t0", title: "YANG GALAU COCOK NIH", desc: "Cocok buat yang lagi galau.", type: "featured", badge: "FEATURED" },
-  { id: "5NcKcfEs2C6L77UtgEnVwr", title: "YG LAGI CINTA CINTAAN BET NIH", desc: "yg buat cinta cintaan cocok nih", type: "featured", badge: "FEATURED" },
-  { id: "5RWmWLYZduxcpeuoR9LeqJ", title: "Enak dengerin malem malem", desc: "Lagu cocok buat kamu saat malem malem di kendaraan.", type: "new", badge: "NEW" },
-  { id: "4S4uJ8Z6ZzZ9TEJ2KwQqRR", title: "LAGU POP YANG ENAK DIDENGERIN EN & IND", desc: "Lagu cocok buat kamu saat berkendara.", type: "hits", badge: "HITS" }
-];
-
 const DEFAULT_COVER = "logo.png";
 
-/* ===== THEME ===== */
-(function initTheme() {
+/* THEME */
+(function () {
   const root = document.documentElement;
   const saved = localStorage.getItem("vadanya-theme");
   const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-  const theme = saved || (prefersDark ? "dark" : "light");
-  if (theme === "dark") root.setAttribute("data-theme", "dark");
-  else root.removeAttribute("data-theme");
+  if ((saved || (prefersDark ? "dark" : "light")) === "dark") {
+    root.setAttribute("data-theme", "dark");
+  }
 })();
 
-const themeToggle = document.getElementById("themeToggle");
-if (themeToggle) {
-  themeToggle.addEventListener("click", () => {
-    const root = document.documentElement;
-    const isDark = root.getAttribute("data-theme") === "dark";
-    if (isDark) {
-      root.removeAttribute("data-theme");
-      localStorage.setItem("vadanya-theme", "light");
-    } else {
-      root.setAttribute("data-theme", "dark");
-      localStorage.setItem("vadanya-theme", "dark");
-    }
-  });
-}
+document.getElementById("themeToggle")?.addEventListener("click", () => {
+  const root = document.documentElement;
+  const isDark = root.getAttribute("data-theme") === "dark";
+  if (isDark) {
+    root.removeAttribute("data-theme");
+    localStorage.setItem("vadanya-theme", "light");
+  } else {
+    root.setAttribute("data-theme", "dark");
+    localStorage.setItem("vadanya-theme", "dark");
+  }
+});
 
-/* ===== PLAYER ===== */
+/* PLAYER */
 const audio = document.getElementById("cpAudio");
 const btn = document.getElementById("cpPlay");
 const vol = document.getElementById("cpVol");
@@ -58,14 +41,12 @@ const coverCache = new Map();
 let lastKey = "";
 
 function setPlaying(on) {
-  if (btn) btn.classList.toggle("playing", on);
+  btn?.classList.toggle("playing", on);
 }
-
 function setTrack(title, artist) {
   if (cpTitle) cpTitle.textContent = title || "Vadanya Radio";
   if (cpArtist) cpArtist.textContent = artist || "Live";
 }
-
 function setCover(url) {
   const src = url || DEFAULT_COVER;
   if (!cpArt) return;
@@ -74,7 +55,6 @@ function setCover(url) {
   img.onerror = () => { cpArt.src = DEFAULT_COVER; };
   img.src = src;
 }
-
 function parseNow(raw) {
   const t = (raw || "").trim();
   if (!t) return null;
@@ -88,15 +68,13 @@ async function fetchCover(title, artist) {
   if (!q) return null;
   if (coverCache.has(q)) return coverCache.get(q);
   try {
-    const url =
-      "https://itunes.apple.com/search?term=" +
-      encodeURIComponent(q) +
-      "&media=music&entity=song&limit=1";
-    const res = await fetch(url);
+    const res = await fetch(
+      "https://itunes.apple.com/search?term=" + encodeURIComponent(q) + "&media=music&entity=song&limit=1"
+    );
     if (!res.ok) return null;
     const data = await res.json();
-    const item = data.results && data.results[0];
-    if (!item || !item.artworkUrl100) return null;
+    const item = data.results?.[0];
+    if (!item?.artworkUrl100) return null;
     const art = item.artworkUrl100.replace(/\/\d+x\d+bb\./, "/300x300bb.");
     coverCache.set(q, art);
     return art;
@@ -119,15 +97,12 @@ async function fetchLyrics(title, artist) {
       const data = await res.json();
       const plain = (data.plainLyrics || data.syncedLyrics || "").trim();
       if (plain) {
-        lyricsText.textContent = plain.replace(/^\[.*?\]\s*/gm, "").trim() || "Lirik tidak ditemukan.";
+        lyricsText.textContent = plain.replace(/^\[.*?\]\s*/gm, "").trim();
         return;
       }
     }
     res = await fetch(
-      "https://api.lyrics.ovh/v1/" +
-        encodeURIComponent(artist) +
-        "/" +
-        encodeURIComponent(title)
+      "https://api.lyrics.ovh/v1/" + encodeURIComponent(artist) + "/" + encodeURIComponent(title)
     );
     if (res.ok) {
       const data = await res.json();
@@ -167,13 +142,6 @@ async function pollNow() {
       }
     }
   } catch (_) {}
-  try {
-    const r2 = await fetch("nowplaying.txt?t=" + Date.now(), { cache: "no-store" });
-    if (r2.ok) {
-      const text = (await r2.text()).trim();
-      if (text) await updateNowPlaying(text);
-    }
-  } catch (_) {}
 }
 
 function start() {
@@ -200,43 +168,31 @@ function stop() {
   setPlaying(false);
 }
 
-if (btn) {
-  btn.addEventListener("click", () => {
-    if (audio && !audio.paused) stop();
-    else start();
-  });
-}
-if (vol && audio) {
-  vol.addEventListener("input", () => {
-    audio.volume = +vol.value;
-  });
-}
-if (audio) {
-  audio.addEventListener("error", () => {
-    setPlaying(false);
-    setTrack("Vadanya Radio", "Stream error");
-  });
-}
+btn?.addEventListener("click", () => {
+  if (audio && !audio.paused) stop();
+  else start();
+});
+vol?.addEventListener("input", () => {
+  if (audio) audio.volume = +vol.value;
+});
 
 pollNow();
 setInterval(pollNow, 5000);
 
-/* ===== LISTENERS ===== */
+/* LISTENERS */
 const listenersCount = document.getElementById("listenersCount");
 async function pollListeners() {
   try {
     const r = await fetch("/listeners?t=" + Date.now(), { cache: "no-store" });
     if (!r.ok) return;
     const data = await r.json();
-    if (listenersCount && data.ok) {
-      listenersCount.textContent = String(data.listeners ?? 0);
-    }
+    if (listenersCount && data.ok) listenersCount.textContent = String(data.listeners ?? 0);
   } catch (_) {}
 }
 pollListeners();
 setInterval(pollListeners, 15000);
 
-/* ===== TRENDING AUTO (iTunes) ===== */
+/* TRENDING (Deezer) */
 async function loadTrending() {
   const el = document.getElementById("trendingGrid");
   if (!el) return;
@@ -246,12 +202,10 @@ async function loadTrending() {
     if (!r.ok) throw new Error("HTTP " + r.status);
     const data = await r.json();
     if (!data.ok || !data.songs?.length) throw new Error("Data kosong");
-
-    el.innerHTML = data.songs.map((song, i) => {
-      const searchUrl =
-        "https://open.spotify.com/search/" +
-        encodeURIComponent(song.spotifySearch || `${song.title} ${song.artist}`);
-      return `
+    el.innerHTML = data.songs
+      .map((song, i) => {
+        const q = encodeURIComponent(song.spotifySearch || `${song.title} ${song.artist}`);
+        return `
         <div class="trend-card">
           <div class="trend-top">
             <span class="trend-rank">${String(i + 1).padStart(2, "0")}</span>
@@ -260,15 +214,67 @@ async function loadTrending() {
               <div class="trend-artist">${song.artist}</div>
             </div>
           </div>
-          <a class="trend-btn spotify" href="${searchUrl}" target="_blank" rel="noopener">Cari di Spotify</a>
+          <a class="trend-btn spotify" href="https://open.spotify.com/search/${q}" target="_blank" rel="noopener">Cari di Spotify</a>
         </div>`;
-    }).join("");
+      })
+      .join("");
   } catch (err) {
     el.innerHTML = `<div class="news-error">Gagal memuat chart.<br /><small>${err.message}</small></div>`;
   }
 }
 
-/* ===== NEWS ===== */
+/* PLAYLISTS (Spotify via /playlists) */
+async function loadPlaylists() {
+  const el = document.getElementById("autoPlaylistGrid");
+  if (!el) return;
+  el.innerHTML = `<div class="news-loading">Memuat playlist…</div>`;
+  try {
+    const r = await fetch("/playlists?t=" + Date.now(), { cache: "no-store" });
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    const data = await r.json();
+    if (!data.ok || !data.playlists?.length) throw new Error(data.error || "Data kosong");
+
+    el.innerHTML = data.playlists
+      .map((p) => {
+        const cover = p.cover || "logo.png";
+        const link = p.link || `https://open.spotify.com/playlist/${p.id}`;
+        return `
+        <div class="playlist-card" data-id="${p.id}">
+          <img class="playlist-cover" src="${cover}" alt="" loading="lazy" onerror="this.src='logo.png'" />
+          <div class="playlist-body">
+            <div class="playlist-title">${p.title}</div>
+            <div class="playlist-desc">${p.desc || ""}</div>
+            <div class="playlist-actions">
+              <button type="button" class="playlist-btn play" data-play="${p.id}">Play</button>
+              <a class="playlist-btn open" href="${link}" target="_blank" rel="noopener">Spotify</a>
+            </div>
+          </div>
+          <div class="playlist-embed-wrap">
+            <iframe
+              title="${p.title}"
+              src="https://open.spotify.com/embed/playlist/${p.id}?utm_source=generator&theme=0"
+              allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+              loading="lazy"></iframe>
+          </div>
+        </div>`;
+      })
+      .join("");
+
+    el.querySelectorAll("[data-play]").forEach((b) => {
+      b.addEventListener("click", () => {
+        const card = b.closest(".playlist-card");
+        if (!card) return;
+        const open = card.classList.contains("open");
+        el.querySelectorAll(".playlist-card.open").forEach((c) => c.classList.remove("open"));
+        if (!open) card.classList.add("open");
+      });
+    });
+  } catch (err) {
+    el.innerHTML = `<div class="news-error">Gagal memuat playlist.<br /><small>${err.message}</small></div>`;
+  }
+}
+
+/* NEWS */
 async function fetchNews() {
   const el = document.getElementById("newsGrid");
   if (!el) return;
@@ -278,19 +284,19 @@ async function fetchNews() {
       const res = await fetch(RSS_PROXY + encodeURIComponent(feedUrl));
       if (!res.ok) throw new Error("HTTP " + res.status);
       const text = await res.text();
-      const parser = new DOMParser();
-      const xml = parser.parseFromString(text, "text/xml");
+      const xml = new DOMParser().parseFromString(text, "text/xml");
       const items = xml.querySelectorAll("item");
       if (!items.length) throw new Error("Feed kosong");
       const news = [];
       for (let i = 0; i < Math.min(items.length, NEWS_LIMIT); i++) {
         const it = items[i];
+        const desc = it.querySelector("description")?.textContent || "";
         news.push({
           title: it.querySelector("title")?.textContent?.trim() || "Tanpa judul",
           link: it.querySelector("link")?.textContent?.trim() || "#",
           pubDate: it.querySelector("pubDate")?.textContent?.trim() || "",
-          desc: it.querySelector("description")?.textContent?.trim() || "",
-          image: extractImage(it, it.querySelector("description")?.textContent || "")
+          desc,
+          image: extractImage(it, desc)
         });
       }
       renderNews(news);
@@ -299,15 +305,11 @@ async function fetchNews() {
       lastError = err;
     }
   }
-  el.innerHTML = `<div class="news-error">Gagal memuat berita.<br /><small>${lastError ? lastError.message : ""}</small></div>`;
+  el.innerHTML = `<div class="news-error">Gagal memuat berita.<br /><small>${lastError?.message || ""}</small></div>`;
 }
 
 function extractImage(item, desc) {
-  let el = item.querySelector("content[url]");
-  if (el) return el.getAttribute("url");
-  el = item.querySelector("thumbnail[url]");
-  if (el) return el.getAttribute("url");
-  el = item.querySelector("enclosure[url]");
+  let el = item.querySelector("content[url], thumbnail[url], enclosure[url]");
   if (el) return el.getAttribute("url");
   const m = desc.match(/<img[^>]+src=["']([^"']+)["']/i);
   return m ? m[1] : "logo.png";
@@ -328,16 +330,17 @@ function formatDate(pubDate) {
 function stripHtml(html) {
   const tmp = document.createElement("div");
   tmp.innerHTML = html || "";
-  return tmp.textContent || tmp.innerText || "";
+  return tmp.textContent || "";
 }
 
 function renderNews(news) {
   const el = document.getElementById("newsGrid");
   if (!el) return;
-  el.innerHTML = news.map((n) => {
-    const excerpt = stripHtml(n.desc).slice(0, 120);
-    const date = formatDate(n.pubDate);
-    return `
+  el.innerHTML = news
+    .map((n) => {
+      const excerpt = stripHtml(n.desc).slice(0, 120);
+      const date = formatDate(n.pubDate);
+      return `
       <a class="news-card" href="${n.link}" target="_blank" rel="noopener">
         <img class="news-thumb" src="${n.image}" alt="" loading="lazy" onerror="this.src='logo.png'" />
         <div class="news-body">
@@ -347,69 +350,10 @@ function renderNews(news) {
           <span class="news-more">Baca selengkapnya →</span>
         </div>
       </a>`;
-  }).join("");
+    })
+    .join("");
 }
 
-/* ===== PLAYLIST ===== */
-async function loadPlaylists() {
-  const el = document.getElementById("autoPlaylistGrid");
-  if (!el) return;
-
-  el.innerHTML = `<div class="news-loading">Memuat playlist…</div>`;
-
-  try {
-    const r = await fetch("/playlists?t=" + Date.now(), { cache: "no-store" });
-    if (!r.ok) throw new Error("HTTP " + r.status);
-    const data = await r.json();
-    if (!data.ok || !data.playlists?.length) throw new Error("Data kosong");
-
-    el.innerHTML = data.playlists
-      .map((p) => {
-        const spotifySearch = encodeURIComponent(p.title);
-        const cover = p.cover || "logo.png";
-        return `
-        <div class="playlist-card" data-id="${p.id}">
-          <img class="playlist-cover" src="${cover}" alt="" loading="lazy"
-            onerror="this.src='logo.png'" />
-          <div class="playlist-body">
-            <div class="playlist-title">${p.title}</div>
-            <div class="playlist-desc">${p.desc || ""}</div>
-            <div class="playlist-actions">
-              <button type="button" class="playlist-btn deezer" data-play="${p.id}">
-                Play
-              </button>
-              <a class="playlist-btn spotify"
-                href="https://open.spotify.com/search/${spotifySearch}"
-                target="_blank" rel="noopener">Spotify</a>
-            </div>
-          </div>
-          <div class="playlist-embed-wrap">
-            <iframe
-              title="${p.title}"
-              src="https://widget.deezer.com/widget/dark/playlist/${p.id}"
-              allow="encrypted-media; clipboard-write"
-              loading="lazy"></iframe>
-          </div>
-        </div>`;
-      })
-      .join("");
-
-    // Toggle embed saat klik Play
-    el.querySelectorAll("[data-play]").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const card = btn.closest(".playlist-card");
-        if (!card) return;
-        const open = card.classList.contains("open");
-        el.querySelectorAll(".playlist-card.open").forEach((c) =>
-          c.classList.remove("open")
-        );
-        if (!open) card.classList.add("open");
-      });
-    });
-  } catch (err) {
-    el.innerHTML = `<div class="news-error">Gagal memuat playlist.<br /><small>${err.message}</small></div>`;
-  }
-}
-
-// INIT
+fetchNews();
+loadTrending();
 loadPlaylists();

@@ -55,13 +55,13 @@
         <h2 class="section-title">Dengerin Vadanya Radio</h2>
         <p class="section-sub">Live streaming 24/7</p>
       </div>
-      <div class="listeners-badge" id="listenersBadge" title="Listeners online">
+      <div class="listeners-badge" id="listenersBadge">
         <span class="listeners-dot"></span>
         <span id="listenersCount">—</span>
       </div>
     </div>
 
-    <div class="custom-player" id="customPlayer">
+    <div class="custom-player">
       <img src="logo.png" alt="" class="cp-art" id="cpArt" />
       <div class="cp-info">
         <div class="cp-live"><span class="listeners-dot"></span> ON AIR</div>
@@ -73,12 +73,12 @@
           <svg class="icon-play" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
           <svg class="icon-pause" viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h4v14H6zm8 0h4v14h-4z"/></svg>
         </button>
-        <input type="range" id="cpVol" min="0" max="1" step="0.01" value="0.85" aria-label="Volume" />
+        <input type="range" id="cpVol" min="0" max="1" step="0.01" value="0.85" />
       </div>
       <audio id="cpAudio" preload="none" crossorigin="anonymous"></audio>
     </div>
 
-    <div class="lyrics-box" id="lyricsBox">
+    <div class="lyrics-box">
       <div class="lyrics-label">LIRIK</div>
       <div class="lyrics-text" id="lyricsText">Putar radio untuk melihat lirik…</div>
     </div>
@@ -96,7 +96,7 @@
 
   <section id="trending" class="section">
     <div class="section-header">
-      <h2 class="section-title">Top Chart Indonesia</h2>
+      <h2 class="section-title">Top Chart</h2>
       <p class="section-sub">Update otomatis dari Deezer</p>
     </div>
     <div class="trending-grid" id="trendingGrid">
@@ -104,17 +104,17 @@
     </div>
   </section>
 
-   <section id="featured" class="section section-gray">
+  <section id="featured" class="section section-gray">
     <div class="section-header">
-      <h2 class="section-title">Playlist Populer</h2>
-      <p class="section-sub">Update otomatis dari Deezer Chart</p>
+      <h2 class="section-title">Playlist Spotify</h2>
+      <p class="section-sub">Featured playlists · update otomatis</p>
     </div>
     <div class="embed-grid" id="autoPlaylistGrid">
       <div class="news-loading">Memuat playlist…</div>
     </div>
   </section>
 
-  <section id="request" class="section section-gray">
+  <section id="request" class="section">
     <div class="request-box">
       <div class="request-text">
         <p class="request-label">Song Request</p>

@@ -8,8 +8,7 @@ export async function onRequest(context) {
         Accept: "application/rss+xml, application/xml, text/xml, */*"
       }
     });
-    const text = await res.text();
-    return new Response(text, {
+    return new Response(await res.text(), {
       headers: {
         "Content-Type": "application/xml; charset=utf-8",
         "Access-Control-Allow-Origin": "*",

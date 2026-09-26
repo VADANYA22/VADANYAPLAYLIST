@@ -1,7 +1,6 @@
 export async function onRequest() {
-  const STATS_URL = "http://s1.free-shoutcast.com:18194/stats?sid=1&json=1";
   try {
-    const res = await fetch(STATS_URL, {
+    const res = await fetch("http://s1.free-shoutcast.com:18194/stats?sid=1&json=1", {
       headers: { "User-Agent": "VadanyaRadio/1.0", Accept: "application/json" }
     });
     if (!res.ok) throw new Error("HTTP " + res.status);
