@@ -156,7 +156,6 @@ body {
 }
 #listenersCount::after { content: " listeners"; font-weight: 600; opacity: 0.75; }
 
-/* CUSTOM PLAYER */
 .custom-player {
   display: flex; flex-wrap: wrap; align-items: center; gap: 1.25rem;
   background: var(--bg-card); border: 1px solid var(--line); border-radius: 20px;
@@ -191,6 +190,29 @@ body {
 #cpVol::-webkit-slider-thumb {
   -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%;
   background: var(--yellow); border: 2px solid #111; cursor: pointer;
+}
+
+.lyrics-box {
+  margin-top: 1rem;
+  background: var(--bg-card);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 1.1rem 1.25rem;
+  max-height: 280px;
+  overflow-y: auto;
+}
+.lyrics-label {
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  color: var(--muted);
+  margin-bottom: 0.6rem;
+}
+.lyrics-text {
+  font-size: 0.95rem;
+  line-height: 1.65;
+  color: var(--text);
+  white-space: pre-wrap;
 }
 
 .news-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.15rem; }

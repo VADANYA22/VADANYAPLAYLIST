@@ -1,9 +1,9 @@
 /**
  * =====================================================
- *  KONFIGURASI — EDIT DI SINI
+ *  KONFIGURASI
  * =====================================================
  */
-const STREAM_URL = "https://s1.free-shoutcast.com/stream/18194"; // ganti jika beda
+const STREAM_URL = "https://s1.free-shoutcast.com/stream/18194";
 
 const RSS_FEEDS = [
   "https://www.antaranews.com/rss/hiburan.xml",
@@ -55,13 +55,14 @@ if (themeToggle) {
   });
 }
 
-/* ===== CUSTOM PLAYER + COVER ===== */
+/* ===== PLAYER ===== */
 const audio = document.getElementById("cpAudio");
 const btn = document.getElementById("cpPlay");
 const vol = document.getElementById("cpVol");
 const cpTitle = document.getElementById("cpTitle");
 const cpArtist = document.getElementById("cpArtist");
 const cpArt = document.getElementById("cpArt");
+const lyricsText = document.getElementById("lyricsText");
 const coverCache = new Map();
 let lastKey = "";
 
@@ -113,6 +114,48 @@ async function fetchCover(title, artist) {
   }
 }
 
+async function fetchLyrics(title, artist) {
+  if (!lyricsText) return;
+  lyricsText.textContent = "Mencari lirik…";
+
+  try {
+    const q =
+      "https://lrclib.net/api/get?artist_name=" +
+      encodeURIComponent(artist) +
+      "&track_name=" +
+      encodeURIComponent(title);
+
+    let res = await fetch(q);
+    if (res.ok) {
+      const data = await res.json();
+      const plain = (data.plainLyrics || data.syncedLyrics || "").trim();
+      if (plain) {
+        const cleaned = plain.replace(/^\[.*?\]\s*/gm, "").trim();
+        lyricsText.textContent = cleaned || "Lirik tidak ditemukan.";
+        return;
+      }
+    }
+
+    res = await fetch(
+      "https://api.lyrics.ovh/v1/" +
+        encodeURIComponent(artist) +
+        "/" +
+        encodeURIComponent(title)
+    );
+    if (res.ok) {
+      const data = await res.json();
+      if (data.lyrics) {
+        lyricsText.textContent = data.lyrics.trim();
+        return;
+      }
+    }
+
+    lyricsText.textContent = "Lirik tidak ditemukan untuk lagu ini.";
+  } catch (_) {
+    lyricsText.textContent = "Gagal memuat lirik.";
+  }
+}
+
 async function updateNowPlaying(raw) {
   const parsed = parseNow(raw);
   if (!parsed) return;
@@ -120,10 +163,12 @@ async function updateNowPlaying(raw) {
   const key = artist + "::" + title;
   if (key === lastKey) return;
   lastKey = key;
+
   setTrack(title, artist);
   setCover(DEFAULT_COVER);
   const cover = await fetchCover(title, artist);
   if (cover) setCover(cover);
+  await fetchLyrics(title, artist);
 }
 
 async function pollNow() {

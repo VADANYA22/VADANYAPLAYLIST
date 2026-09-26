@@ -1,16 +1,11 @@
 export async function onRequest(context) {
-  const url = new URL(context.request.url);
-  const target = url.searchParams.get("url");
-
-  if (!target) {
-    return new Response("Missing url", { status: 400 });
-  }
-
+  const target = new URL(context.request.url).searchParams.get("url");
+  if (!target) return new Response("Missing url", { status: 400 });
   try {
     const res = await fetch(target, {
       headers: {
         "User-Agent": "VadanyaRadio/1.0",
-        "Accept": "application/rss+xml, application/xml, text/xml, */*"
+        Accept: "application/rss+xml, application/xml, text/xml, */*"
       }
     });
     const text = await res.text();
