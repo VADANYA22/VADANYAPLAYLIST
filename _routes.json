@@ -1,0 +1,5 @@
+{
+  "version": 1,
+  "include": ["/*"],
+  "exclude": ["/trending", "/playlists", "/rss", "/nowplaying", "/listeners"]
+}
