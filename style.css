@@ -126,6 +126,48 @@ body {
   border-radius: 14px;
   display: block;
 }
+.listen-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.listeners-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text);
+  background: var(--bg-card);
+  border: 1px solid var(--line);
+  padding: 0.45rem 0.9rem;
+  border-radius: 999px;
+  white-space: nowrap;
+  box-shadow: 0 2px 12px var(--shadow);
+}
+
+.listeners-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #1db954;
+  box-shadow: 0 0 8px rgba(29, 185, 84, 0.55);
+  animation: listener-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes listener-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
+
+#listenersCount::after {
+  content: " listeners";
+  font-weight: 600;
+  opacity: 0.75;
+}
 
 /* NEWS */
 .news-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.15rem; }

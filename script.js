@@ -1,23 +1,8 @@
-/**
- * =====================================================
- *  KONFIGURASI
- * =====================================================
- */
-
-// Ganti URL RSS sesuai portal berita favorit kamu
-// Contoh portal Indonesia yang punya RSS:
-//   ANTARA News   : https://www.antaranews.com/rss/terkini.xml
-//   ANTARA Hiburan: https://www.antaranews.com/rss/hiburan.xml
-//   CNN Indonesia : https://www.cnnindonesia.com/hiburan/rss
-//   Tempo         : https://rss.tempo.co/nasional
-//   Kumparan      : https://kumparan.com/rss
-const RSS_URL = "https://www.antaranews.com/rss/hiburan.xml";
-
-// Jumlah berita yang ditampilkan
+const RSS_FEEDS = [
+  "https://www.antaranews.com/rss/hiburan.xml",
+  "https://www.antaranews.com/rss/terkini.xml"
+];
 const NEWS_LIMIT = 6;
-
-// Proxy publik buat bypass CORS (gratis, bisa dipakai)
-// Kalau mau lebih reliable, buat Cloudflare Function sendiri
 const RSS_PROXY = "/rss?url=";
 
 /* ===== TRENDING ===== */
