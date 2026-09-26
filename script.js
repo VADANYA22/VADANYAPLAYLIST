@@ -351,32 +351,65 @@ function renderNews(news) {
 }
 
 /* ===== PLAYLIST ===== */
-function createEmbedCard(p) {
-  const badgeClass = p.type === "featured" ? "featured" : p.type === "hits" ? "hits" : "new";
-  return `
-    <div class="embed-card" tabindex="0">
-      <div class="embed-header">
-        <h3 class="embed-title">${p.title}</h3>
-        <span class="embed-badge ${badgeClass}">${p.badge}</span>
-      </div>
-      <p class="embed-desc">${p.desc}</p>
-      <div class="embed-iframe-wrap">
-        <iframe src="https://open.spotify.com/embed/playlist/${p.id}?utm_source=generator&theme=0"
-          allowfullscreen allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-          loading="lazy"></iframe>
-      </div>
-    </div>`;
+async function loadPlaylists() {
+  const el = document.getElementById("autoPlaylistGrid");
+  if (!el) return;
+
+  el.innerHTML = `<div class="news-loading">Memuat playlist…</div>`;
+
+  try {
+    const r = await fetch("/playlists?t=" + Date.now(), { cache: "no-store" });
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    const data = await r.json();
+    if (!data.ok || !data.playlists?.length) throw new Error("Data kosong");
+
+    el.innerHTML = data.playlists
+      .map((p) => {
+        const spotifySearch = encodeURIComponent(p.title);
+        const cover = p.cover || "logo.png";
+        return `
+        <div class="playlist-card" data-id="${p.id}">
+          <img class="playlist-cover" src="${cover}" alt="" loading="lazy"
+            onerror="this.src='logo.png'" />
+          <div class="playlist-body">
+            <div class="playlist-title">${p.title}</div>
+            <div class="playlist-desc">${p.desc || ""}</div>
+            <div class="playlist-actions">
+              <button type="button" class="playlist-btn deezer" data-play="${p.id}">
+                Play
+              </button>
+              <a class="playlist-btn spotify"
+                href="https://open.spotify.com/search/${spotifySearch}"
+                target="_blank" rel="noopener">Spotify</a>
+            </div>
+          </div>
+          <div class="playlist-embed-wrap">
+            <iframe
+              title="${p.title}"
+              src="https://widget.deezer.com/widget/dark/playlist/${p.id}"
+              allow="encrypted-media; clipboard-write"
+              loading="lazy"></iframe>
+          </div>
+        </div>`;
+      })
+      .join("");
+
+    // Toggle embed saat klik Play
+    el.querySelectorAll("[data-play]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const card = btn.closest(".playlist-card");
+        if (!card) return;
+        const open = card.classList.contains("open");
+        el.querySelectorAll(".playlist-card.open").forEach((c) =>
+          c.classList.remove("open")
+        );
+        if (!open) card.classList.add("open");
+      });
+    });
+  } catch (err) {
+    el.innerHTML = `<div class="news-error">Gagal memuat playlist.<br /><small>${err.message}</small></div>`;
+  }
 }
 
-function renderSection(containerId, filterType) {
-  const list = filterType === "all" ? playlists : playlists.filter((p) => p.type === filterType);
-  const el = document.getElementById(containerId);
-  if (el) el.innerHTML = list.map(createEmbedCard).join("");
-}
-
-fetchNews();
-loadTrending();
-renderSection("featuredGrid", "featured");
-renderSection("hitsGrid", "hits");
-renderSection("newGrid", "new");
-renderSection("allGrid", "all");
+// INIT
+loadPlaylists();

@@ -301,6 +301,80 @@ body {
 .footer-logo { height: 24px; opacity: 0.5; }
 .footer p { font-size: 0.8rem; color: var(--muted); }
 
+.playlist-card {
+  background: var(--bg-card);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+.playlist-card:hover {
+  box-shadow: 0 10px 30px var(--shadow);
+  transform: translateY(-3px);
+}
+.playlist-cover {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  background: var(--bg-soft);
+  display: block;
+}
+.playlist-body {
+  padding: 0.9rem 1rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  flex: 1;
+}
+.playlist-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.3;
+}
+.playlist-desc {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+.playlist-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+.playlist-btn {
+  flex: 1;
+  text-align: center;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 0.5rem;
+  border-radius: 999px;
+  text-decoration: none;
+}
+.playlist-btn.deezer {
+  background: #a238ff;
+  color: #fff;
+}
+.playlist-btn.spotify {
+  background: #1DB954;
+  color: #000;
+}
+.playlist-embed-wrap {
+  height: 0;
+  overflow: hidden;
+  transition: height 0.25s;
+}
+.playlist-card.open .playlist-embed-wrap {
+  height: 360px;
+}
+.playlist-embed-wrap iframe {
+  width: 100%;
+  height: 360px;
+  border: none;
+  display: block;
+}
+
 @media (max-width: 700px) {
   .nav-links { display: none; }
   .hero { min-height: 280px; padding: 2.5rem 1.15rem; }
@@ -312,3 +386,4 @@ body {
   .custom-player { flex-direction: column; text-align: center; }
   .cp-controls { width: 100%; justify-content: center; }
 }
+
