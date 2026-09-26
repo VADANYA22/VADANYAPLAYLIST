@@ -1,18 +1,18 @@
 export async function onRequest() {
-  const STATION_ID = "1067069";
-  const url =
-    `https://listeners.rcast.net/data.php?serviceid=${STATION_ID}&minutes=5&_=${Date.now()}`;
+  const STATS_URL = "http://s1.free-shoutcast.com:18194/stats?sid=1&json=1";
 
   try {
-    const res = await fetch(url, {
-      headers: { "User-Agent": "VadanyaRadio/1.0" }
+    const res = await fetch(STATS_URL, {
+      headers: {
+        "User-Agent": "VadanyaRadio/1.0",
+        "Accept": "application/json"
+      }
     });
     if (!res.ok) throw new Error("HTTP " + res.status);
 
     const data = await res.json();
-    const arr = Array.isArray(data.listeners) ? data.listeners : [];
-    const current = arr.length ? Number(arr[arr.length - 1]) || 0 : 0;
-    const peak = data.kpi?.peak ?? current;
+    const current = Number(data.currentlisteners ?? data.uniquelisteners ?? 0) || 0;
+    const peak = Number(data.peaklisteners ?? current) || current;
 
     return new Response(
       JSON.stringify({ listeners: current, peak, ok: true }),
