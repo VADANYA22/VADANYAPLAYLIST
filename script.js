@@ -189,16 +189,34 @@ async function loadPlaylists() {
   const el = document.getElementById("autoPlaylistGrid");
   if (!el) return;
   el.innerHTML = `<div class="news-loading">Memuat playlist…</div>`;
+
   try {
     const r = await fetch("/playlists?t=" + Date.now(), { cache: "no-store" });
-    if (!r.ok) throw new Error("HTTP " + r.status);
-    const data = await r.json();
-    if (!data.ok || !data.playlists?.length) throw new Error(data.error || "Data kosong");
+    const text = await r.text();
 
-    el.innerHTML = data.playlists.map((p) => {
-      const cover = p.cover || "logo.png";
-      const spotifyQ = encodeURIComponent(p.title);
-      return `
+    // Kalau response HTML (404/error page)
+    if (text.trim().startsWith("<")) {
+      throw new Error(
+        "Endpoint /playlists mengembalikan HTML (function belum deploy?). Status " + r.status
+      );
+    }
+
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch {
+      throw new Error("Response bukan JSON: " + text.slice(0, 80));
+    }
+
+    if (!data.ok || !data.playlists?.length) {
+      throw new Error(data.error || "Data kosong");
+    }
+
+    el.innerHTML = data.playlists
+      .map((p) => {
+        const cover = p.cover || "logo.png";
+        const spotifyQ = encodeURIComponent(p.title);
+        return `
         <div class="playlist-card" data-id="${p.id}">
           <img class="playlist-cover" src="${cover}" alt="" loading="lazy" onerror="this.src='logo.png'" />
           <div class="playlist-body">
@@ -219,7 +237,8 @@ async function loadPlaylists() {
               loading="lazy"></iframe>
           </div>
         </div>`;
-    }).join("");
+      })
+      .join("");
 
     el.querySelectorAll("[data-play]").forEach((b) => {
       b.addEventListener("click", () => {
