@@ -156,103 +156,57 @@ pollListeners();
 setInterval(pollListeners, 15000);
 
 /* TRENDING */
-async function loadTrending() {
-  const el = document.getElementById("trendingGrid");
-  if (!el) return;
-  el.innerHTML = `<div class="news-loading">Memuat chart…</div>`;
-  try {
-    const r = await fetch("/trending?t=" + Date.now(), { cache: "no-store" });
-    if (!r.ok) throw new Error("HTTP " + r.status);
-    const data = await r.json();
-    if (!data.ok || !data.songs?.length) throw new Error(data.error || "Data kosong");
-    el.innerHTML = data.songs.map((song, i) => {
-      const q = encodeURIComponent(song.spotifySearch || `${song.title} ${song.artist}`);
-      return `
-        <div class="trend-card">
-          <div class="trend-top">
-            <span class="trend-rank">${String(i + 1).padStart(2, "0")}</span>
-            <div class="trend-info">
-              <div class="trend-title">${song.title}</div>
-              <div class="trend-artist">${song.artist}</div>
-            </div>
-          </div>
-          <a class="trend-btn spotify" href="https://open.spotify.com/search/${q}" target="_blank" rel="noopener">Cari di Spotify</a>
-        </div>`;
-    }).join("");
-  } catch (err) {
-    el.innerHTML = `<div class="news-error">Gagal memuat chart.<br /><small>${err.message}</small></div>`;
-  }
-}
+el.innerHTML = data.songs.map((song, i) => {
+  const q = encodeURIComponent(song.spotifySearch || `${song.title} ${song.artist}`);
+  const ytmUrl = song.videoId
+    ? `https://music.youtube.com/watch?v=${song.videoId}`
+    : `https://music.youtube.com/search?q=${q}`;
+
+  return `
+    <div class="trend-card">
+      <div class="trend-top">
+        <span class="trend-rank">${String(i + 1).padStart(2, "0")}</span>
+        <div class="trend-info">
+          <div class="trend-title">${song.title}</div>
+          <div class="trend-artist">${song.artist}</div>
+        </div>
+      </div>
+      <a class="trend-btn ytmusic" href="${ytmUrl}" target="_blank" rel="noopener">
+        Buka di YouTube Music
+      </a>
+    </div>`;
+}).join("");
 
 /* PLAYLISTS */
-async function loadPlaylists() {
-  const el = document.getElementById("autoPlaylistGrid");
-  if (!el) return;
-  el.innerHTML = `<div class="news-loading">Memuat playlist…</div>`;
+el.innerHTML = data.playlists
+  .map((p) => {
+    const cover = p.cover || "logo.png";
+    const ytmUrl = `https://music.youtube.com/playlist?list=${p.id}`;
 
-  try {
-    const r = await fetch("/playlists?t=" + Date.now(), { cache: "no-store" });
-    const text = await r.text();
-
-    // Kalau response HTML (404/error page)
-    if (text.trim().startsWith("<")) {
-      throw new Error(
-        "Endpoint /playlists mengembalikan HTML (function belum deploy?). Status " + r.status
-      );
-    }
-
-    let data;
-    try {
-      data = JSON.parse(text);
-    } catch {
-      throw new Error("Response bukan JSON: " + text.slice(0, 80));
-    }
-
-    if (!data.ok || !data.playlists?.length) {
-      throw new Error(data.error || "Data kosong");
-    }
-
-    el.innerHTML = data.playlists
-      .map((p) => {
-        const cover = p.cover || "logo.png";
-        const spotifyQ = encodeURIComponent(p.title);
-        return `
-        <div class="playlist-card" data-id="${p.id}">
-          <img class="playlist-cover" src="${cover}" alt="" loading="lazy" onerror="this.src='logo.png'" />
-          <div class="playlist-body">
-            <div class="playlist-title">${p.title}</div>
-            <div class="playlist-desc">${p.desc || ""}</div>
-            <div class="playlist-actions">
-              <button type="button" class="playlist-btn play" data-play="${p.id}">Play</button>
-              <a class="playlist-btn open"
-                href="https://open.spotify.com/search/${spotifyQ}"
-                target="_blank" rel="noopener">Spotify</a>
-            </div>
-          </div>
-          <div class="playlist-embed-wrap">
-            <iframe
-              title="${p.title}"
-              src="https://widget.deezer.com/widget/dark/playlist/${p.id}"
-              allow="encrypted-media; clipboard-write"
-              loading="lazy"></iframe>
-          </div>
-        </div>`;
-      })
-      .join("");
-
-    el.querySelectorAll("[data-play]").forEach((b) => {
-      b.addEventListener("click", () => {
-        const card = b.closest(".playlist-card");
-        if (!card) return;
-        const open = card.classList.contains("open");
-        el.querySelectorAll(".playlist-card.open").forEach((c) => c.classList.remove("open"));
-        if (!open) card.classList.add("open");
-      });
-    });
-  } catch (err) {
-    el.innerHTML = `<div class="news-error">Gagal memuat playlist.<br /><small>${err.message}</small></div>`;
-  }
-}
+    return `
+    <div class="playlist-card" data-id="${p.id}">
+      <img class="playlist-cover" src="${cover}" alt="" loading="lazy" onerror="this.src='logo.png'" />
+      <div class="playlist-body">
+        <div class="playlist-title">${p.title}</div>
+        <div class="playlist-desc">${p.desc || ""}</div>
+        <div class="playlist-actions">
+          <button type="button" class="playlist-btn play" data-play="${p.id}">Play</button>
+          <a class="playlist-btn open"
+            href="${ytmUrl}"
+            target="_blank" rel="noopener">YouTube Music</a>
+        </div>
+      </div>
+      <div class="playlist-embed-wrap">
+        <iframe
+          title="${p.title}"
+          src="https://www.youtube-nocookie.com/embed/videoseries?list=${p.id}"
+          allow="encrypted-media; clipboard-write; picture-in-picture"
+          loading="lazy"
+          allowfullscreen></iframe>
+      </div>
+    </div>`;
+  })
+  .join("");
 
 /* NEWS */
 async function fetchNews() {
