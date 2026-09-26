@@ -194,9 +194,10 @@ async function loadPlaylists() {
     if (!r.ok) throw new Error("HTTP " + r.status);
     const data = await r.json();
     if (!data.ok || !data.playlists?.length) throw new Error(data.error || "Data kosong");
+
     el.innerHTML = data.playlists.map((p) => {
       const cover = p.cover || "logo.png";
-      const link = p.link || `https://open.spotify.com/playlist/${p.id}`;
+      const spotifyQ = encodeURIComponent(p.title);
       return `
         <div class="playlist-card" data-id="${p.id}">
           <img class="playlist-cover" src="${cover}" alt="" loading="lazy" onerror="this.src='logo.png'" />
@@ -205,17 +206,21 @@ async function loadPlaylists() {
             <div class="playlist-desc">${p.desc || ""}</div>
             <div class="playlist-actions">
               <button type="button" class="playlist-btn play" data-play="${p.id}">Play</button>
-              <a class="playlist-btn open" href="${link}" target="_blank" rel="noopener">Spotify</a>
+              <a class="playlist-btn open"
+                href="https://open.spotify.com/search/${spotifyQ}"
+                target="_blank" rel="noopener">Spotify</a>
             </div>
           </div>
           <div class="playlist-embed-wrap">
-            <iframe title="${p.title}"
-              src="https://open.spotify.com/embed/playlist/${p.id}?utm_source=generator&theme=0"
-              allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+            <iframe
+              title="${p.title}"
+              src="https://widget.deezer.com/widget/dark/playlist/${p.id}"
+              allow="encrypted-media; clipboard-write"
               loading="lazy"></iframe>
           </div>
         </div>`;
     }).join("");
+
     el.querySelectorAll("[data-play]").forEach((b) => {
       b.addEventListener("click", () => {
         const card = b.closest(".playlist-card");
