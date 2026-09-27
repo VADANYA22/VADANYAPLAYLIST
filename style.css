@@ -2,7 +2,6 @@
 
 :root {
   --yellow: #ffe600;
-  --yellow-dark: #f0d500;
   --bg: #ffffff;
   --bg-soft: #f5f5f5;
   --bg-card: #ffffff;
@@ -13,7 +12,7 @@
   --hero-1: #1a5cff;
   --hero-2: #2b7fff;
   --hero-3: #5a9fff;
-  --shadow: rgba(0, 0, 0, 0.08);
+  --shadow: rgba(0,0,0,0.08);
   --rank-bg: #111111;
   --link-blue: #1a5cff;
   --font: "Outfit", system-ui, sans-serif;
@@ -30,7 +29,7 @@
   --hero-1: #0d1b4a;
   --hero-2: #152a6e;
   --hero-3: #1e3a8a;
-  --shadow: rgba(0, 0, 0, 0.45);
+  --shadow: rgba(0,0,0,0.45);
   --rank-bg: #1c1c20;
   --link-blue: #6b9fff;
 }
@@ -137,9 +136,9 @@ body {
 }
 .listeners-dot {
   width: 8px; height: 8px; border-radius: 50%; background: #1db954;
-  animation: listener-pulse 1.6s ease-in-out infinite;
+  animation: pulse 1.6s ease-in-out infinite;
 }
-@keyframes listener-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
 #listenersCount::after { content: " listeners"; font-weight: 600; opacity: 0.75; }
 
 .custom-player {

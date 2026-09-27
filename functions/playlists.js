@@ -1,13 +1,9 @@
 export async function onRequest() {
   try {
     const res = await fetch("https://api.deezer.com/chart/0/playlists?limit=8", {
-      headers: {
-        "User-Agent": "VadanyaRadio/1.0",
-        Accept: "application/json"
-      }
+      headers: { "User-Agent": "VadanyaRadio/1.0", Accept: "application/json" }
     });
     if (!res.ok) throw new Error("HTTP " + res.status);
-
     const data = await res.json();
     const playlists = (data?.data || []).map((item, i) => ({
       id: String(item.id),
@@ -19,9 +15,7 @@ export async function onRequest() {
       link: item.link || `https://www.deezer.com/playlist/${item.id}`,
       rank: i + 1
     }));
-
     if (!playlists.length) throw new Error("Data kosong");
-
     return new Response(JSON.stringify({ ok: true, playlists, source: "deezer" }), {
       headers: {
         "Content-Type": "application/json",
@@ -30,15 +24,12 @@ export async function onRequest() {
       }
     });
   } catch (e) {
-    return new Response(
-      JSON.stringify({ ok: false, playlists: [], error: String(e) }),
-      {
-        headers: {
-          "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*",
-          "Cache-Control": "no-store"
-        }
+    return new Response(JSON.stringify({ ok: false, playlists: [], error: String(e) }), {
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
+        "Cache-Control": "no-store"
       }
-    );
+    });
   }
 }
