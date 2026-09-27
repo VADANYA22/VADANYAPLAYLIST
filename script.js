@@ -7,7 +7,6 @@ const NEWS_LIMIT = 6;
 const RSS_PROXY = "/rss?url=";
 const DEFAULT_COVER = "logo.png";
 
-/* THEME */
 (function () {
   const saved = localStorage.getItem("vadanya-theme");
   const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
@@ -27,7 +26,6 @@ document.getElementById("themeToggle")?.addEventListener("click", () => {
   }
 });
 
-/* PLAYER */
 const audio = document.getElementById("cpAudio");
 const btn = document.getElementById("cpPlay");
 const vol = document.getElementById("cpVol");
@@ -142,7 +140,6 @@ vol?.addEventListener("input", () => { if (audio) audio.volume = +vol.value; });
 pollNow();
 setInterval(pollNow, 5000);
 
-/* LISTENERS */
 const listenersCount = document.getElementById("listenersCount");
 async function pollListeners() {
   try {
@@ -155,7 +152,6 @@ async function pollListeners() {
 pollListeners();
 setInterval(pollListeners, 15000);
 
-/* TRENDING (Deezer) */
 async function loadTrending() {
   const el = document.getElementById("trendingGrid");
   if (!el) return;
@@ -163,7 +159,7 @@ async function loadTrending() {
   try {
     const r = await fetch("/trending?t=" + Date.now(), { cache: "no-store" });
     const text = await r.text();
-    if (text.trim().startsWith("<")) throw new Error("Function /trending belum deploy (dapat HTML)");
+    if (text.trim().startsWith("<")) throw new Error("Function /trending belum deploy");
     const data = JSON.parse(text);
     if (!data.ok || !data.songs?.length) throw new Error(data.error || "Data kosong");
     el.innerHTML = data.songs.map((song, i) => {
@@ -185,7 +181,6 @@ async function loadTrending() {
   }
 }
 
-/* PLAYLISTS (Deezer + tombol Spotify) */
 async function loadPlaylists() {
   const el = document.getElementById("autoPlaylistGrid");
   if (!el) return;
@@ -193,12 +188,9 @@ async function loadPlaylists() {
   try {
     const r = await fetch("/playlists?t=" + Date.now(), { cache: "no-store" });
     const text = await r.text();
-    if (text.trim().startsWith("<")) {
-      throw new Error("Endpoint /playlists mengembalikan HTML (function belum deploy?). Status " + r.status);
-    }
+    if (text.trim().startsWith("<")) throw new Error("Function /playlists belum deploy. Status " + r.status);
     const data = JSON.parse(text);
     if (!data.ok || !data.playlists?.length) throw new Error(data.error || "Data kosong");
-
     el.innerHTML = data.playlists.map((p) => {
       const cover = p.cover || "logo.png";
       const spotifyQ = encodeURIComponent(p.title);
@@ -214,13 +206,11 @@ async function loadPlaylists() {
             </div>
           </div>
           <div class="playlist-embed-wrap">
-            <iframe title="${p.title}"
-              src="https://widget.deezer.com/widget/dark/playlist/${p.id}"
+            <iframe title="${p.title}" src="https://widget.deezer.com/widget/dark/playlist/${p.id}"
               allow="encrypted-media; clipboard-write" loading="lazy"></iframe>
           </div>
         </div>`;
     }).join("");
-
     el.querySelectorAll("[data-play]").forEach((b) => {
       b.addEventListener("click", () => {
         const card = b.closest(".playlist-card");
@@ -235,7 +225,6 @@ async function loadPlaylists() {
   }
 }
 
-/* NEWS */
 async function fetchNews() {
   const el = document.getElementById("newsGrid");
   if (!el) return;
