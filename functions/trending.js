@@ -13,19 +13,11 @@ export async function onRequest() {
     }));
     if (!songs.length) throw new Error("Data kosong");
     return new Response(JSON.stringify({ ok: true, songs, source: "deezer" }), {
-      headers: {
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*",
-        "Cache-Control": "public, max-age=1800"
-      }
+      headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*", "Cache-Control": "public, max-age=1800" }
     });
   } catch (e) {
     return new Response(JSON.stringify({ ok: false, songs: [], error: String(e) }), {
-      headers: {
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*",
-        "Cache-Control": "no-store"
-      }
+      headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*", "Cache-Control": "no-store" }
     });
   }
 }

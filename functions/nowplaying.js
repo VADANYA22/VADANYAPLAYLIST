@@ -6,9 +6,7 @@ export async function onRequest() {
     if (!res.ok) throw new Error("HTTP " + res.status);
     const data = await res.json();
     const song = (data.songtitle || "").trim();
-    if (song) {
-      return json({ nowplaying: song, ok: true });
-    }
+    if (song) return json({ nowplaying: song, ok: true });
   } catch (e) {
     return json({ nowplaying: "Vadanya Radio - Live", ok: false, error: String(e) });
   }
@@ -16,10 +14,6 @@ export async function onRequest() {
 }
 function json(obj) {
   return new Response(JSON.stringify(obj), {
-    headers: {
-      "Content-Type": "application/json",
-      "Access-Control-Allow-Origin": "*",
-      "Cache-Control": "no-store"
-    }
+    headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*", "Cache-Control": "no-store" }
   });
 }
