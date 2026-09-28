@@ -7,7 +7,7 @@ export async function onRequest() {
     const data = await res.json();
     const playlists = (data?.data || []).map((item, i) => ({
       id: String(item.id),
-      title: item.title || "Playlist",
+      title: item.title || "Playlists",
       desc: item.user?.name
         ? `Oleh ${item.user.name} · ${item.nb_tracks || "?"} tracks`
         : `${item.nb_tracks || "?"} tracks`,
