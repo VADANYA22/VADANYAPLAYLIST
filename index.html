@@ -13,6 +13,16 @@
 </head>
 <body>
 
+  <div id="pageLoader" class="page-loader" aria-live="polite">
+    <div class="loader-inner">
+      <img src="logo.png" alt="Vadanya" class="loader-logo" />
+      <div class="loader-bar"><div class="loader-bar-fill"></div></div>
+      <p class="loader-text">Loading Vadanya…</p>
+    </div>
+  </div>
+
+  <div class="reveal-on-load">
+
   <nav class="navbar">
     <div class="nav-inner">
       <a href="#" class="brand">
@@ -60,7 +70,6 @@
         <span id="listenersCount">—</span>
       </div>
     </div>
-
     <div class="custom-player">
       <img src="logo.png" alt="" class="cp-art" id="cpArt" />
       <div class="cp-info">
@@ -77,7 +86,6 @@
       </div>
       <audio id="cpAudio" preload="none" crossorigin="anonymous"></audio>
     </div>
-
     <div class="lyrics-box">
       <div class="lyrics-label">LIRIK</div>
       <div class="lyrics-text" id="lyricsText">Putar radio untuk melihat lirik…</div>
@@ -131,6 +139,24 @@
     <img src="logo.png" alt="" class="footer-logo" />
     <p>© 2026 Vadanya Playlist · #TempatTerbaikKamu</p>
   </footer>
+
+  </div><!-- /.reveal-on-load -->
+
+  <div class="mini-bar" id="miniBar">
+    <img src="logo.png" alt="" class="mini-art" id="miniArt" />
+    <div class="mini-meta">
+      <div class="mini-live"><span class="mini-dot"></span> ON AIR</div>
+      <div class="mini-title" id="miniTitle">Vadanya Radio</div>
+      <div class="mini-artist" id="miniArtist">Live</div>
+    </div>
+    <div class="mini-controls">
+      <button type="button" class="mini-play" id="miniPlay" aria-label="Play">
+        <svg class="icon-play" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+        <svg class="icon-pause" viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h4v14H6zm8 0h4v14h-4z"/></svg>
+      </button>
+      <input type="range" id="miniVol" class="mini-vol" min="0" max="1" step="0.01" value="0.85" />
+    </div>
+  </div>
 
   <script src="script.js"></script>
 </body>
