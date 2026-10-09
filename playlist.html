@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Playlist — Vadanya</title>
   <link rel="icon" type="image/png" href="FavIcon.png" />
   <link rel="stylesheet" href="style.css" />
@@ -20,11 +20,13 @@
     <nav class="navbar">
       <div class="nav-inner">
         <a href="index.html" class="brand"><img src="logo.png" alt="" class="brand-logo" /><span class="brand-text">VADANYA</span></a>
-        <div class="nav-links">
+        <button type="button" class="nav-toggle" id="navToggle" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
+        <div class="nav-links" id="navLinks">
           <a href="listen.html" class="nav-link">Listen</a>
           <a href="berita.html" class="nav-link">Berita</a>
           <a href="chart.html" class="nav-link">Chart</a>
           <a href="playlist.html" class="nav-link is-active">Playlist</a>
+          <a href="map.html" class="nav-link">Map</a>
           <a href="request.html" class="nav-link">Request</a>
         </div>
         <div class="nav-actions">
@@ -40,9 +42,8 @@
       <div class="section-header">
         <h2 class="section-title">Playlist Populer</h2>
         <p class="section-sub">Update otomatis · putar Deezer / cari Spotify</p>
-      <div class="embed-grid" id="autoPlaylistGrid">
-  <div class="news-loading">Memuat playlist…</div>
-</div>
+      </div>
+      <div class="embed-grid" id="autoPlaylistGrid"><div class="news-loading">Memuat playlist…</div></div>
     </section>
     <footer class="footer">
       <img src="logo.png" alt="" class="footer-logo" />

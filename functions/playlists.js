@@ -7,29 +7,19 @@ export async function onRequest() {
     const data = await res.json();
     const playlists = (data?.data || []).map((item, i) => ({
       id: String(item.id),
-      title: item.title || "Playlists",
-      desc: item.user?.name
-        ? `Oleh ${item.user.name} · ${item.nb_tracks || "?"} tracks`
-        : `${item.nb_tracks || "?"} tracks`,
+      title: item.title || "Playlist",
+      desc: item.user?.name ? `Oleh ${item.user.name} · ${item.nb_tracks || "?"} tracks` : `${item.nb_tracks || "?"} tracks`,
       cover: item.picture_medium || item.picture || null,
       link: item.link || `https://www.deezer.com/playlist/${item.id}`,
       rank: i + 1
     }));
     if (!playlists.length) throw new Error("Data kosong");
     return new Response(JSON.stringify({ ok: true, playlists, source: "deezer" }), {
-      headers: {
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*",
-        "Cache-Control": "public, max-age=1800"
-      }
+      headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*", "Cache-Control": "public, max-age=900" }
     });
   } catch (e) {
     return new Response(JSON.stringify({ ok: false, playlists: [], error: String(e) }), {
-      headers: {
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*",
-        "Cache-Control": "no-store"
-      }
+      headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*", "Cache-Control": "no-store" }
     });
   }
 }
