@@ -60,6 +60,8 @@ const btn = document.getElementById("cpPlay");
 const vol = document.getElementById("cpVol");
 const cpTitle = document.getElementById("cpTitle");
 const cpArtist = document.getElementById("cpArtist");
+const cpTitle2 = document.getElementById("cpTitle2");
+const cpArtist2 = document.getElementById("cpArtist2");
 const cpArt = document.getElementById("cpArt");
 const lyricsText = document.getElementById("lyricsText");
 const miniPlay = document.getElementById("miniPlay");
@@ -77,8 +79,8 @@ function setPlaying(on) {
 function setTrack(title, artist) {
   const t = title || "Vadanya Radio";
   const a = artist || "Live";
-  if (cpTitle) cpTitle.textContent = t;
-  if (cpArtist) cpArtist.textContent = a;
+  [cpTitle, cpTitle2].forEach((el) => { if (el) el.textContent = t; });
+  [cpArtist, cpArtist2].forEach((el) => { if (el) el.textContent = a; });
   if (miniTitle) miniTitle.textContent = t;
   if (miniArtist) miniArtist.textContent = a;
 }
@@ -177,6 +179,16 @@ btn?.addEventListener("click", () => { if (audio && !audio.paused) stop(); else 
 miniPlay?.addEventListener("click", () => { if (audio && !audio.paused) stop(); else start(); });
 vol?.addEventListener("input", () => syncVolume(false));
 miniVol?.addEventListener("input", () => syncVolume(true));
+
+/* Studio buttons */
+document.getElementById("btnHear")?.addEventListener("click", () => {
+  if (audio && !audio.paused) stop();
+  else start();
+});
+document.getElementById("btnLivechat")?.addEventListener("click", () => {
+  document.getElementById("livechatPanel")?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+});
+
 pollNow();
 setInterval(pollNow, 5000);
 
@@ -218,12 +230,10 @@ async function loadPlaylists() {
   try {
     const r = await fetch("/playlists?t=" + Date.now(), { cache: "no-store" });
     const text = await r.text();
-    if (!r.ok) throw new Error("HTTP " + r.status + " — upload functions/playlists.js");
+    if (!r.ok) throw new Error("HTTP " + r.status);
     if (text.trim().startsWith("<")) throw new Error("Function /playlists belum aktif");
     const data = JSON.parse(text);
-    if (!data.ok || !Array.isArray(data.playlists) || !data.playlists.length) {
-      throw new Error(data.error || "Data playlist kosong");
-    }
+    if (!data.ok || !Array.isArray(data.playlists) || !data.playlists.length) throw new Error(data.error || "Data kosong");
     el.innerHTML = data.playlists.map((p) => {
       const id = String(p.id || "");
       const title = (p.title || "Playlist").replace(/</g, "&lt;");
@@ -244,7 +254,7 @@ async function loadPlaylists() {
       });
     });
   } catch (err) {
-    el.innerHTML = `<div class="news-error">Gagal memuat playlist.<br /><small>${err.message}</small><br /><small>Cek <a href="/playlists" target="_blank">/playlists</a></small></div>`;
+    el.innerHTML = `<div class="news-error">Gagal memuat playlist.<br /><small>${err.message}</small></div>`;
   }
 }
 
@@ -300,11 +310,7 @@ async function fetchNews() {
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
     attribution: "&copy; OpenStreetMap", maxZoom: 18
   }).addTo(map);
-  const icon = L.divIcon({
-    className: "listener-marker",
-    html: '<div class="listener-pulse"></div>',
-    iconSize: [18, 18], iconAnchor: [9, 9]
-  });
+  const icon = L.divIcon({ className: "listener-marker", html: '<div class="listener-pulse"></div>', iconSize: [18, 18], iconAnchor: [9, 9] });
   const marker = L.marker([-6.2, 106.8], { icon }).addTo(map);
   marker.bindPopup("Vadanya Radio · Live").openPopup();
   const elLive = document.getElementById("mapListeners");
