@@ -16,17 +16,11 @@
       <p class="loader-text">Loading Vadanya…</p>
     </div>
   </div>
-
   <div class="reveal-on-load">
     <nav class="navbar">
       <div class="nav-inner">
-        <a href="index.html" class="brand">
-          <img src="logo.png" alt="" class="brand-logo" />
-          <span class="brand-text">VADANYA</span>
-        </a>
-        <button type="button" class="nav-toggle" id="navToggle" aria-label="Menu" aria-expanded="false">
-          <span></span><span></span><span></span>
-        </button>
+        <a href="index.html" class="brand"><img src="logo.png" alt="" class="brand-logo" /><span class="brand-text">VADANYA</span></a>
+        <button type="button" class="nav-toggle" id="navToggle" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
         <div class="nav-links" id="navLinks">
           <a href="listen.html" class="nav-link is-active">Listen</a>
           <a href="berita.html" class="nav-link">Berita</a>
@@ -44,70 +38,11 @@
         </div>
       </div>
     </nav>
-
-    <!-- ===== STUDIO (layout Ardan-style) ===== -->
-    <section class="studio-section">
-      <div class="studio-grid">
-        <div class="studio-player">
-          <div class="studio-frame">
-            <!-- Ganti USERNAME Kick. Atau hapus iframe & pakai poster saja -->
-            <iframe
-              id="studioVideo"
-              src="https://player.kick.com/vadanyaradio?autoplay=false&muted=true"
-              title="Vadanya Live"
-              allowfullscreen
-              allow="autoplay; encrypted-media; picture-in-picture; fullscreen">
-            </iframe>
-            <!-- Fallback poster (tampil jika iframe disembunyikan) -->
-            <!-- <img src="studio-bg.png" alt="" class="studio-poster" /> -->
-          </div>
-          <div class="studio-overlay-top">
-            <span class="badge-avs">VADANYA</span>
-            <span class="badge-live"><span class="live-dot"></span> LIVE STREAMING</span>
-          </div>
-          <div class="now-airing" id="nowAiring">
-            <img src="logo.png" alt="" class="now-airing-img" />
-            <div>
-              <div class="now-airing-label">ON AIR</div>
-              <div class="now-airing-title" id="cpTitle">Vadanya Radio</div>
-              <div class="now-airing-sub" id="cpArtist">Live</div>
-            </div>
-          </div>
-        </div>
-
-        <aside class="studio-chat" id="livechatPanel">
-          <h2 class="chat-title">LIVECHAT</h2>
-          <div class="chat-frame">
-            <!-- Ganti USERNAME Kick. Atau ganti ke YouTube live chat -->
-            <iframe
-              src="https://chat.kick.cx/embed/vadanyaradio"
-              title="Livechat"
-              frameborder="0"
-              allow="clipboard-write">
-            </iframe>
-          </div>
-        </aside>
-      </div>
-
-      <div class="studio-actions">
-        <button type="button" class="studio-btn" id="btnHear">
-          <span class="studio-btn-ico">🎧</span> Hear
-        </button>
-        <a class="studio-btn" href="https://wa.me/" target="_blank" rel="noopener">
-          <span class="studio-btn-ico">💬</span> Chat
-        </a>
-        <button type="button" class="studio-btn" id="btnLivechat">
-          <span class="studio-btn-ico">💭</span> Livechat
-        </button>
-      </div>
-    </section>
-
-    <!-- Player audio klasik + lirik -->
     <section class="section">
       <div class="section-header listen-header">
         <div>
-          <h2 class="section-title">Audio Stream</h2>
-          <p class="section-sub">Dengerin radio lewat audio</p>
+          <h2 class="section-title">Dengerin Vadanya Radio</h2>
+          <p class="section-sub">Live streaming 24/7</p>
         </div>
         <div class="listeners-badge">
           <span class="listeners-dot"></span>
@@ -118,8 +53,8 @@
         <img src="logo.png" alt="" class="cp-art" id="cpArt" />
         <div class="cp-info">
           <div class="cp-live"><span class="listeners-dot"></span> ON AIR</div>
-          <div class="cp-title" id="cpTitle2">Vadanya Radio</div>
-          <div class="cp-artist" id="cpArtist2">Live</div>
+          <div class="cp-title" id="cpTitle">Vadanya Radio</div>
+          <div class="cp-artist" id="cpArtist">Live</div>
         </div>
         <div class="cp-controls">
           <button type="button" class="cp-play" id="cpPlay" aria-label="Play">
@@ -134,13 +69,11 @@
         <div class="lyrics-text" id="lyricsText">Putar radio untuk melihat lirik…</div>
       </div>
     </section>
-
     <footer class="footer">
       <img src="logo.png" alt="" class="footer-logo" />
       <p>© 2026 Vadanya Playlist · #TempatTerbaikKamu</p>
     </footer>
   </div>
-
   <div class="mini-bar" id="miniBar">
     <img src="logo.png" alt="" class="mini-art" id="miniArt" />
     <div class="mini-meta">
@@ -151,7 +84,7 @@
     <div class="mini-controls">
       <button type="button" class="mini-play" id="miniPlay" aria-label="Play">
         <svg class="icon-play" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-        <svg class="icon-pause" viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h4v14H6zm8 0h4v14h-4z"/></svg>
+        <svg class="icon-pause" viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h4v14h-4z"/></svg>
       </button>
       <input type="range" id="miniVol" class="mini-vol" min="0" max="1" step="0.01" value="0.85" />
     </div>

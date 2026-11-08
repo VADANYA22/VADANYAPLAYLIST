@@ -1,20 +1,40 @@
-export async function onRequest() {
+export async function onRequest(context) {
+  const API_KEY = context.env?.YOUTUBE_API_KEY || "PASTE_YOUTUBE_API_KEY_DISINI";
+  const PLAYLISTS = [
+    { id: "PLFgquLnL59alCl9oCgcAgGPKa9hha50Ug", title: "Top Hits", desc: "Hits di YouTube Music" },
+    { id: "PL4fGSI1pDJn6jXS_Tv_N9B-Zb-H-J3eXD", title: "Trending Music", desc: "Trending musik" },
+    { id: "PLrAXtmRdnEQy6nuLMfO0f4jK6cQfQfQfQ", title: "Chill Hits", desc: "Santai & enak" }
+  ];
   try {
-    const res = await fetch("https://api.deezer.com/chart/0/playlists?limit=8", {
-      headers: { "User-Agent": "VadanyaRadio/1.0", Accept: "application/json" }
-    });
-    if (!res.ok) throw new Error("HTTP " + res.status);
-    const data = await res.json();
-    const playlists = (data?.data || []).map((item, i) => ({
-      id: String(item.id),
-      title: item.title || "Playlist",
-      desc: item.user?.name ? `Oleh ${item.user.name} · ${item.nb_tracks || "?"} tracks` : `${item.nb_tracks || "?"} tracks`,
-      cover: item.picture_medium || item.picture || null,
-      link: item.link || `https://www.deezer.com/playlist/${item.id}`,
-      rank: i + 1
-    }));
-    if (!playlists.length) throw new Error("Data kosong");
-    return new Response(JSON.stringify({ ok: true, playlists, source: "deezer" }), {
+    const playlists = [];
+    for (const p of PLAYLISTS) {
+      let cover = null, title = p.title, desc = p.desc;
+      if (API_KEY && !API_KEY.includes("PASTE")) {
+        try {
+          const r = await fetch(
+            "https://www.googleapis.com/youtube/v3/playlists?part=snippet&id=" + p.id + "&key=" + API_KEY
+          );
+          if (r.ok) {
+            const d = await r.json();
+            const item = d.items?.[0];
+            if (item) {
+              title = item.snippet?.title || title;
+              desc = (item.snippet?.description || desc).slice(0, 90);
+              cover = item.snippet?.thumbnails?.medium?.url || item.snippet?.thumbnails?.default?.url || null;
+            }
+          }
+        } catch (_) {}
+      }
+      playlists.push({
+        id: p.id,
+        title,
+        desc,
+        cover,
+        link: "https://music.youtube.com/playlist?list=" + p.id,
+        youtubeEmbed: "https://www.youtube.com/embed/videoseries?list=" + p.id
+      });
+    }
+    return new Response(JSON.stringify({ ok: true, playlists, source: "youtube" }), {
       headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*", "Cache-Control": "public, max-age=900" }
     });
   } catch (e) {

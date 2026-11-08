@@ -10,7 +10,7 @@ export async function onRequest() {
     return new Response(JSON.stringify({ listeners: current, peak, ok: true }), {
       headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*", "Cache-Control": "no-store" }
     });
-  } catch (e) {
+  } catch (_) {
     return new Response(JSON.stringify({ listeners: 0, peak: 0, ok: false }), {
       headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*", "Cache-Control": "no-store" }
     });

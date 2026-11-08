@@ -60,8 +60,6 @@ const btn = document.getElementById("cpPlay");
 const vol = document.getElementById("cpVol");
 const cpTitle = document.getElementById("cpTitle");
 const cpArtist = document.getElementById("cpArtist");
-const cpTitle2 = document.getElementById("cpTitle2");
-const cpArtist2 = document.getElementById("cpArtist2");
 const cpArt = document.getElementById("cpArt");
 const lyricsText = document.getElementById("lyricsText");
 const miniPlay = document.getElementById("miniPlay");
@@ -79,8 +77,8 @@ function setPlaying(on) {
 function setTrack(title, artist) {
   const t = title || "Vadanya Radio";
   const a = artist || "Live";
-  [cpTitle, cpTitle2].forEach((el) => { if (el) el.textContent = t; });
-  [cpArtist, cpArtist2].forEach((el) => { if (el) el.textContent = a; });
+  if (cpTitle) cpTitle.textContent = t;
+  if (cpArtist) cpArtist.textContent = a;
   if (miniTitle) miniTitle.textContent = t;
   if (miniArtist) miniArtist.textContent = a;
 }
@@ -179,16 +177,6 @@ btn?.addEventListener("click", () => { if (audio && !audio.paused) stop(); else 
 miniPlay?.addEventListener("click", () => { if (audio && !audio.paused) stop(); else start(); });
 vol?.addEventListener("input", () => syncVolume(false));
 miniVol?.addEventListener("input", () => syncVolume(true));
-
-/* Studio buttons */
-document.getElementById("btnHear")?.addEventListener("click", () => {
-  if (audio && !audio.paused) stop();
-  else start();
-});
-document.getElementById("btnLivechat")?.addEventListener("click", () => {
-  document.getElementById("livechatPanel")?.scrollIntoView({ behavior: "smooth", block: "nearest" });
-});
-
 pollNow();
 setInterval(pollNow, 5000);
 
@@ -207,7 +195,7 @@ setInterval(pollListeners, 15000);
 async function loadTrending() {
   const el = document.getElementById("trendingGrid");
   if (!el) return;
-  el.innerHTML = `<div class="news-loading">Memuat chart…</div>`;
+  el.innerHTML = `<div class="news-loading">Memuat chart YouTube Music…</div>`;
   try {
     const r = await fetch("/trending?t=" + Date.now(), { cache: "no-store" });
     const text = await r.text();
@@ -215,8 +203,9 @@ async function loadTrending() {
     const data = JSON.parse(text);
     if (!data.ok || !data.songs?.length) throw new Error(data.error || "Data kosong");
     el.innerHTML = data.songs.map((song, i) => {
-      const q = encodeURIComponent(song.spotifySearch || `${song.title} ${song.artist}`);
-      return `<div class="trend-card"><div class="trend-top"><span class="trend-rank">${String(i + 1).padStart(2, "0")}</span><div class="trend-info"><div class="trend-title">${song.title}</div><div class="trend-artist">${song.artist}</div></div></div><a class="trend-btn spotify" href="https://open.spotify.com/search/${q}" target="_blank" rel="noopener">Cari di Spotify</a></div>`;
+      const yt = song.youtubeUrl || song.youtubeWatch || "#";
+      const cover = song.cover ? `<img class="trend-cover" src="${song.cover}" alt="" loading="lazy" />` : "";
+      return `<div class="trend-card"><div class="trend-top"><span class="trend-rank">${String(i + 1).padStart(2, "0")}</span>${cover}<div class="trend-info"><div class="trend-title">${song.title}</div><div class="trend-artist">${song.artist}</div></div></div><a class="trend-btn youtube" href="${yt}" target="_blank" rel="noopener">Buka di YouTube Music</a></div>`;
     }).join("");
   } catch (err) {
     el.innerHTML = `<div class="news-error">Gagal memuat chart.<br /><small>${err.message}</small></div>`;
@@ -226,21 +215,22 @@ async function loadTrending() {
 async function loadPlaylists() {
   const el = document.getElementById("autoPlaylistGrid");
   if (!el) return;
-  el.innerHTML = `<div class="news-loading">Memuat playlist…</div>`;
+  el.innerHTML = `<div class="news-loading">Memuat playlist YouTube…</div>`;
   try {
     const r = await fetch("/playlists?t=" + Date.now(), { cache: "no-store" });
     const text = await r.text();
     if (!r.ok) throw new Error("HTTP " + r.status);
     if (text.trim().startsWith("<")) throw new Error("Function /playlists belum aktif");
     const data = JSON.parse(text);
-    if (!data.ok || !Array.isArray(data.playlists) || !data.playlists.length) throw new Error(data.error || "Data kosong");
+    if (!data.ok || !data.playlists?.length) throw new Error(data.error || "Data kosong");
     el.innerHTML = data.playlists.map((p) => {
       const id = String(p.id || "");
       const title = (p.title || "Playlist").replace(/</g, "&lt;");
       const desc = (p.desc || "").replace(/</g, "&lt;");
       const cover = p.cover || "logo.png";
-      const q = encodeURIComponent(p.title || "playlist");
-      return `<div class="playlist-card" data-id="${id}"><img class="playlist-cover" src="${cover}" alt="" loading="lazy" onerror="this.onerror=null;this.src='logo.png'" /><div class="playlist-body"><div class="playlist-title">${title}</div><div class="playlist-desc">${desc}</div><div class="playlist-actions"><button type="button" class="playlist-btn play" data-play="${id}">Play</button><a class="playlist-btn open" href="https://open.spotify.com/search/${q}" target="_blank" rel="noopener">Spotify</a></div></div><div class="playlist-embed-wrap"><iframe title="${title}" src="https://widget.deezer.com/widget/dark/playlist/${id}" allow="encrypted-media; clipboard-write" loading="lazy"></iframe></div></div>`;
+      const embed = p.youtubeEmbed || ("https://www.youtube.com/embed/videoseries?list=" + id);
+      const link = p.link || ("https://music.youtube.com/playlist?list=" + id);
+      return `<div class="playlist-card" data-id="${id}"><img class="playlist-cover" src="${cover}" alt="" loading="lazy" onerror="this.onerror=null;this.src='logo.png'" /><div class="playlist-body"><div class="playlist-title">${title}</div><div class="playlist-desc">${desc}</div><div class="playlist-actions"><button type="button" class="playlist-btn play" data-play="${id}">Play</button><a class="playlist-btn open" href="${link}" target="_blank" rel="noopener">YouTube Music</a></div></div><div class="playlist-embed-wrap"><iframe title="${title}" src="${embed}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe></div></div>`;
     }).join("");
     el.querySelectorAll("[data-play]").forEach((b) => {
       b.addEventListener("click", (e) => {

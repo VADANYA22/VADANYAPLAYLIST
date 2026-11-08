@@ -6,14 +6,17 @@ export async function onRequest() {
     if (!res.ok) throw new Error("HTTP " + res.status);
     const data = await res.json();
     const song = (data.songtitle || "").trim();
-    if (song) return json({ nowplaying: song, ok: true });
+    if (song) {
+      return new Response(JSON.stringify({ nowplaying: song, ok: true }), {
+        headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*", "Cache-Control": "no-store" }
+      });
+    }
   } catch (e) {
-    return json({ nowplaying: "Vadanya Radio - Live", ok: false, error: String(e) });
+    return new Response(JSON.stringify({ nowplaying: "Vadanya Radio - Live", ok: false, error: String(e) }), {
+      headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*", "Cache-Control": "no-store" }
+    });
   }
-  return json({ nowplaying: "Vadanya Radio - Live", ok: false });
-}
-function json(obj) {
-  return new Response(JSON.stringify(obj), {
+  return new Response(JSON.stringify({ nowplaying: "Vadanya Radio - Live", ok: false }), {
     headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*", "Cache-Control": "no-store" }
   });
 }
