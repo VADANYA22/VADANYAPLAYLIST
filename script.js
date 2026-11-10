@@ -6,6 +6,8 @@ const RSS_FEEDS = [
 const NEWS_LIMIT = 6;
 const RSS_PROXY = "/rss?url=";
 const DEFAULT_COVER = "logo.png";
+const STORAGE_PLAY = "vadanya-playing";
+const STORAGE_VOL = "vadanya-volume";
 
 (function () {
   document.body.classList.add("is-loading");
@@ -69,22 +71,28 @@ const miniArtist = document.getElementById("miniArtist");
 const miniArt = document.getElementById("miniArt");
 const coverCache = new Map();
 let lastKey = "";
+let currentMeta = { title: "Vadanya Radio", artist: "Live", cover: DEFAULT_COVER };
 
 function setPlaying(on) {
   btn?.classList.toggle("playing", on);
   miniPlay?.classList.toggle("playing", on);
   vinylDisc?.classList.toggle("is-spinning", on);
+  try { sessionStorage.setItem(STORAGE_PLAY, on ? "1" : "0"); } catch (_) {}
 }
 function setTrack(title, artist) {
   const t = title || "Vadanya Radio";
   const a = artist || "Live";
+  currentMeta.title = t;
+  currentMeta.artist = a;
   if (cpTitle) cpTitle.textContent = t;
   if (cpArtist) cpArtist.textContent = a;
   if (miniTitle) miniTitle.textContent = t;
   if (miniArtist) miniArtist.textContent = a;
+  updateMediaSession();
 }
 function setCover(url) {
   const src = url || DEFAULT_COVER;
+  currentMeta.cover = src;
   const apply = (el) => {
     if (!el) return;
     const img = new Image();
@@ -94,6 +102,22 @@ function setCover(url) {
   };
   apply(cpArt);
   apply(miniArt);
+  updateMediaSession();
+}
+function updateMediaSession() {
+  if (!("mediaSession" in navigator)) return;
+  try {
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: currentMeta.title,
+      artist: currentMeta.artist,
+      album: "Vadanya Radio",
+      artwork: [
+        { src: currentMeta.cover, sizes: "400x400", type: "image/jpeg" },
+        { src: DEFAULT_COVER, sizes: "96x96", type: "image/png" }
+      ]
+    });
+    navigator.mediaSession.playbackState = audio && !audio.paused ? "playing" : "paused";
+  } catch (_) {}
 }
 function parseNow(raw) {
   const t = (raw || "").trim();
@@ -107,9 +131,7 @@ async function fetchCover(title, artist) {
   if (!q) return null;
   if (coverCache.has(q)) return coverCache.get(q);
   try {
-    const res = await fetch(
-      "https://itunes.apple.com/search?term=" + encodeURIComponent(q) + "&media=music&entity=song&limit=1"
-    );
+    const res = await fetch("https://itunes.apple.com/search?term=" + encodeURIComponent(q) + "&media=music&entity=song&limit=1");
     if (!res.ok) return null;
     const data = await res.json();
     const item = data.results?.[0];
@@ -140,35 +162,69 @@ async function pollNow() {
     }
   } catch (_) {}
 }
+function getSavedVolume() {
+  try {
+    const v = parseFloat(sessionStorage.getItem(STORAGE_VOL));
+    if (!isNaN(v) && v >= 0 && v <= 1) return v;
+  } catch (_) {}
+  return 0.85;
+}
+function saveVolume(v) {
+  try { sessionStorage.setItem(STORAGE_VOL, String(v)); } catch (_) {}
+}
+function wasPlaying() {
+  try { return sessionStorage.getItem(STORAGE_PLAY) === "1"; } catch (_) { return false; }
+}
 function start() {
   if (!audio) return;
   const sep = STREAM_URL.includes("?") ? "&" : "?";
-  audio.src = STREAM_URL + sep + "t=" + Date.now();
-  audio.volume = vol ? +vol.value : miniVol ? +miniVol.value : 0.85;
-  audio.play().then(() => { setPlaying(true); pollNow(); })
-    .catch(() => { setPlaying(false); setTrack("Vadanya Radio", "Gagal connect"); });
+  if (audio.paused || !audio.src.includes(STREAM_URL.split("?")[0])) {
+    audio.src = STREAM_URL + sep + "t=" + Date.now();
+  }
+  const v = getSavedVolume();
+  audio.volume = v;
+  if (vol) vol.value = v;
+  if (miniVol) miniVol.value = v;
+  audio.play()
+    .then(() => { setPlaying(true); updateMediaSession(); pollNow(); })
+    .catch(() => { setPlaying(false); setTrack("Vadanya Radio", "Tap play untuk mulai"); });
 }
 function stop() {
   if (!audio) return;
   audio.pause();
-  audio.removeAttribute("src");
-  audio.load();
   setPlaying(false);
+  updateMediaSession();
 }
 function syncVolume(fromMini) {
   if (!audio) return;
-  if (fromMini && miniVol) {
-    audio.volume = +miniVol.value;
-    if (vol) vol.value = miniVol.value;
-  } else if (vol) {
-    audio.volume = +vol.value;
-    if (miniVol) miniVol.value = vol.value;
-  }
+  let v;
+  if (fromMini && miniVol) { v = +miniVol.value; if (vol) vol.value = v; }
+  else if (vol) { v = +vol.value; if (miniVol) miniVol.value = v; }
+  else return;
+  audio.volume = v;
+  saveVolume(v);
 }
 btn?.addEventListener("click", () => { if (audio && !audio.paused) stop(); else start(); });
 miniPlay?.addEventListener("click", () => { if (audio && !audio.paused) stop(); else start(); });
 vol?.addEventListener("input", () => syncVolume(false));
 miniVol?.addEventListener("input", () => syncVolume(true));
+
+if ("mediaSession" in navigator) {
+  try {
+    navigator.mediaSession.setActionHandler("play", () => start());
+    navigator.mediaSession.setActionHandler("pause", () => stop());
+    navigator.mediaSession.setActionHandler("stop", () => stop());
+  } catch (_) {}
+}
+
+(function resumeAcrossPages() {
+  const v = getSavedVolume();
+  if (vol) vol.value = v;
+  if (miniVol) miniVol.value = v;
+  if (audio) audio.volume = v;
+  if (wasPlaying()) setTimeout(() => start(), 200);
+})();
+
 pollNow();
 setInterval(pollNow, 5000);
 
@@ -228,5 +284,4 @@ async function fetchNews() {
   }
   el.innerHTML = `<div class="news-error">Gagal memuat berita.<br /><small>${lastError?.message || ""}</small></div>`;
 }
-
 if (document.getElementById("newsGrid")) fetchNews();
