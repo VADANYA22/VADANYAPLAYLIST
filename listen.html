@@ -24,9 +24,6 @@
         <div class="nav-links" id="navLinks">
           <a href="listen.html" class="nav-link is-active">Listen</a>
           <a href="berita.html" class="nav-link">Berita</a>
-          <a href="chart.html" class="nav-link">Chart</a>
-          <a href="playlist.html" class="nav-link">Playlist</a>
-          <a href="map.html" class="nav-link">Map</a>
           <a href="request.html" class="nav-link">Request</a>
         </div>
         <div class="nav-actions">
@@ -38,7 +35,7 @@
         </div>
       </div>
     </nav>
-    <section class="section">
+    <section class="section vinyl-section">
       <div class="section-header listen-header">
         <div>
           <h2 class="section-title">Dengerin Vadanya Radio</h2>
@@ -49,24 +46,27 @@
           <span id="listenersCount">—</span>
         </div>
       </div>
-      <div class="custom-player">
-        <img src="logo.png" alt="" class="cp-art" id="cpArt" />
-        <div class="cp-info">
-          <div class="cp-live"><span class="listeners-dot"></span> ON AIR</div>
-          <div class="cp-title" id="cpTitle">Vadanya Radio</div>
-          <div class="cp-artist" id="cpArtist">Live</div>
+      <div class="vinyl-stage">
+        <div class="vinyl-disc" id="vinylDisc">
+          <div class="vinyl-grooves"></div>
+          <div class="vinyl-label">
+            <img src="logo.png" alt="" class="vinyl-cover" id="cpArt" />
+          </div>
+          <div class="vinyl-spindle"></div>
         </div>
-        <div class="cp-controls">
-          <button type="button" class="cp-play" id="cpPlay" aria-label="Play">
-            <svg class="icon-play" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-            <svg class="icon-pause" viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h4v14H6zm8 0h4v14h-4z"/></svg>
-          </button>
-          <input type="range" id="cpVol" min="0" max="1" step="0.01" value="0.85" />
-        </div>
+        <div class="vinyl-tonearm" id="tonearm" aria-hidden="true"></div>
       </div>
-      <div class="lyrics-box">
-        <div class="lyrics-label">LIRIK</div>
-        <div class="lyrics-text" id="lyricsText">Putar radio untuk melihat lirik…</div>
+      <div class="vinyl-meta">
+        <div class="cp-live"><span class="listeners-dot"></span> ON AIR</div>
+        <h3 class="vinyl-title" id="cpTitle">Vadanya Radio</h3>
+        <p class="vinyl-artist" id="cpArtist">Live</p>
+      </div>
+      <div class="vinyl-controls">
+        <button type="button" class="cp-play" id="cpPlay" aria-label="Play">
+          <svg class="icon-play" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+          <svg class="icon-pause" viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h4v14H6zm8 0h4v14h-4z"/></svg>
+        </button>
+        <input type="range" id="cpVol" min="0" max="1" step="0.01" value="0.85" />
       </div>
     </section>
     <footer class="footer">

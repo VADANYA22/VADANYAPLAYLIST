@@ -61,7 +61,7 @@ const vol = document.getElementById("cpVol");
 const cpTitle = document.getElementById("cpTitle");
 const cpArtist = document.getElementById("cpArtist");
 const cpArt = document.getElementById("cpArt");
-const lyricsText = document.getElementById("lyricsText");
+const vinylDisc = document.getElementById("vinylDisc");
 const miniPlay = document.getElementById("miniPlay");
 const miniVol = document.getElementById("miniVol");
 const miniTitle = document.getElementById("miniTitle");
@@ -73,6 +73,7 @@ let lastKey = "";
 function setPlaying(on) {
   btn?.classList.toggle("playing", on);
   miniPlay?.classList.toggle("playing", on);
+  vinylDisc?.classList.toggle("is-spinning", on);
 }
 function setTrack(title, artist) {
   const t = title || "Vadanya Radio";
@@ -106,33 +107,17 @@ async function fetchCover(title, artist) {
   if (!q) return null;
   if (coverCache.has(q)) return coverCache.get(q);
   try {
-    const res = await fetch("https://itunes.apple.com/search?term=" + encodeURIComponent(q) + "&media=music&entity=song&limit=1");
+    const res = await fetch(
+      "https://itunes.apple.com/search?term=" + encodeURIComponent(q) + "&media=music&entity=song&limit=1"
+    );
     if (!res.ok) return null;
     const data = await res.json();
     const item = data.results?.[0];
     if (!item?.artworkUrl100) return null;
-    const art = item.artworkUrl100.replace(/\/\d+x\d+bb\./, "/300x300bb.");
+    const art = item.artworkUrl100.replace(/\/\d+x\d+bb\./, "/400x400bb.");
     coverCache.set(q, art);
     return art;
   } catch (_) { return null; }
-}
-async function fetchLyrics(title, artist) {
-  if (!lyricsText) return;
-  lyricsText.textContent = "Mencari lirik…";
-  try {
-    let res = await fetch("https://lrclib.net/api/get?artist_name=" + encodeURIComponent(artist) + "&track_name=" + encodeURIComponent(title));
-    if (res.ok) {
-      const data = await res.json();
-      const plain = (data.plainLyrics || data.syncedLyrics || "").trim();
-      if (plain) { lyricsText.textContent = plain.replace(/^\[.*?\]\s*/gm, "").trim(); return; }
-    }
-    res = await fetch("https://api.lyrics.ovh/v1/" + encodeURIComponent(artist) + "/" + encodeURIComponent(title));
-    if (res.ok) {
-      const data = await res.json();
-      if (data.lyrics) { lyricsText.textContent = data.lyrics.trim(); return; }
-    }
-    lyricsText.textContent = "Lirik tidak ditemukan untuk lagu ini.";
-  } catch (_) { lyricsText.textContent = "Gagal memuat lirik."; }
 }
 async function updateNowPlaying(raw) {
   const parsed = parseNow(raw);
@@ -145,7 +130,6 @@ async function updateNowPlaying(raw) {
   setCover(DEFAULT_COVER);
   const cover = await fetchCover(title, artist);
   if (cover) setCover(cover);
-  await fetchLyrics(title, artist);
 }
 async function pollNow() {
   try {
@@ -166,12 +150,20 @@ function start() {
 }
 function stop() {
   if (!audio) return;
-  audio.pause(); audio.removeAttribute("src"); audio.load(); setPlaying(false);
+  audio.pause();
+  audio.removeAttribute("src");
+  audio.load();
+  setPlaying(false);
 }
 function syncVolume(fromMini) {
   if (!audio) return;
-  if (fromMini && miniVol) { audio.volume = +miniVol.value; if (vol) vol.value = miniVol.value; }
-  else if (vol) { audio.volume = +vol.value; if (miniVol) miniVol.value = vol.value; }
+  if (fromMini && miniVol) {
+    audio.volume = +miniVol.value;
+    if (vol) vol.value = miniVol.value;
+  } else if (vol) {
+    audio.volume = +vol.value;
+    if (miniVol) miniVol.value = vol.value;
+  }
 }
 btn?.addEventListener("click", () => { if (audio && !audio.paused) stop(); else start(); });
 miniPlay?.addEventListener("click", () => { if (audio && !audio.paused) stop(); else start(); });
@@ -191,62 +183,6 @@ async function pollListeners() {
 }
 pollListeners();
 setInterval(pollListeners, 15000);
-
-async function loadTrending() {
-  const el = document.getElementById("trendingGrid");
-  if (!el) return;
-  el.innerHTML = `<div class="news-loading">Memuat chart YouTube Music…</div>`;
-  try {
-    const r = await fetch("/trending?t=" + Date.now(), { cache: "no-store" });
-    const text = await r.text();
-    if (text.trim().startsWith("<")) throw new Error("Function /trending belum deploy");
-    const data = JSON.parse(text);
-    if (!data.ok || !data.songs?.length) throw new Error(data.error || "Data kosong");
-    el.innerHTML = data.songs.map((song, i) => {
-      const yt = song.youtubeUrl || song.youtubeWatch || "#";
-      const cover = song.cover ? `<img class="trend-cover" src="${song.cover}" alt="" loading="lazy" />` : "";
-      return `<div class="trend-card"><div class="trend-top"><span class="trend-rank">${String(i + 1).padStart(2, "0")}</span>${cover}<div class="trend-info"><div class="trend-title">${song.title}</div><div class="trend-artist">${song.artist}</div></div></div><a class="trend-btn youtube" href="${yt}" target="_blank" rel="noopener">Buka di YouTube Music</a></div>`;
-    }).join("");
-  } catch (err) {
-    el.innerHTML = `<div class="news-error">Gagal memuat chart.<br /><small>${err.message}</small></div>`;
-  }
-}
-
-async function loadPlaylists() {
-  const el = document.getElementById("autoPlaylistGrid");
-  if (!el) return;
-  el.innerHTML = `<div class="news-loading">Memuat playlist YouTube…</div>`;
-  try {
-    const r = await fetch("/playlists?t=" + Date.now(), { cache: "no-store" });
-    const text = await r.text();
-    if (!r.ok) throw new Error("HTTP " + r.status);
-    if (text.trim().startsWith("<")) throw new Error("Function /playlists belum aktif");
-    const data = JSON.parse(text);
-    if (!data.ok || !data.playlists?.length) throw new Error(data.error || "Data kosong");
-    el.innerHTML = data.playlists.map((p) => {
-      const id = String(p.id || "");
-      const title = (p.title || "Playlist").replace(/</g, "&lt;");
-      const desc = (p.desc || "").replace(/</g, "&lt;");
-      const cover = p.cover || "logo.png";
-      const embed = p.youtubeEmbed || ("https://www.youtube.com/embed/videoseries?list=" + id);
-      const link = p.link || ("https://music.youtube.com/playlist?list=" + id);
-      return `<div class="playlist-card" data-id="${id}"><img class="playlist-cover" src="${cover}" alt="" loading="lazy" onerror="this.onerror=null;this.src='logo.png'" /><div class="playlist-body"><div class="playlist-title">${title}</div><div class="playlist-desc">${desc}</div><div class="playlist-actions"><button type="button" class="playlist-btn play" data-play="${id}">Play</button><a class="playlist-btn open" href="${link}" target="_blank" rel="noopener">YouTube Music</a></div></div><div class="playlist-embed-wrap"><iframe title="${title}" src="${embed}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe></div></div>`;
-    }).join("");
-    el.querySelectorAll("[data-play]").forEach((b) => {
-      b.addEventListener("click", (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        const card = b.closest(".playlist-card");
-        if (!card) return;
-        const wasOpen = card.classList.contains("open");
-        el.querySelectorAll(".playlist-card.open").forEach((c) => c.classList.remove("open"));
-        if (!wasOpen) card.classList.add("open");
-      });
-    });
-  } catch (err) {
-    el.innerHTML = `<div class="news-error">Gagal memuat playlist.<br /><small>${err.message}</small></div>`;
-  }
-}
 
 async function fetchNews() {
   const el = document.getElementById("newsGrid");
@@ -293,44 +229,4 @@ async function fetchNews() {
   el.innerHTML = `<div class="news-error">Gagal memuat berita.<br /><small>${lastError?.message || ""}</small></div>`;
 }
 
-(function initListenersMap() {
-  const mapEl = document.getElementById("listenersMap");
-  if (!mapEl || typeof L === "undefined") return;
-  const map = L.map(mapEl, { scrollWheelZoom: true }).setView([-2.5, 118], 5);
-  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    attribution: "&copy; OpenStreetMap", maxZoom: 18
-  }).addTo(map);
-  const icon = L.divIcon({ className: "listener-marker", html: '<div class="listener-pulse"></div>', iconSize: [18, 18], iconAnchor: [9, 9] });
-  const marker = L.marker([-6.2, 106.8], { icon }).addTo(map);
-  marker.bindPopup("Vadanya Radio · Live").openPopup();
-  const elLive = document.getElementById("mapListeners");
-  const elPeak = document.getElementById("mapPeak");
-  const elSong = document.getElementById("mapSong");
-  async function refreshMapStats() {
-    try {
-      const r = await fetch("/listeners?t=" + Date.now(), { cache: "no-store" });
-      if (r.ok) {
-        const d = await r.json();
-        if (d.ok) {
-          if (elLive) elLive.textContent = String(d.listeners ?? 0);
-          if (elPeak) elPeak.textContent = String(d.peak ?? d.listeners ?? 0);
-          marker.setPopupContent(`<strong>${d.listeners ?? 0}</strong> listeners live<br />Peak: ${d.peak ?? "—"}`);
-        }
-      }
-    } catch (_) {}
-    try {
-      const r2 = await fetch("/nowplaying?t=" + Date.now(), { cache: "no-store" });
-      if (r2.ok) {
-        const d2 = await r2.json();
-        if (elSong && d2.nowplaying) elSong.textContent = d2.nowplaying;
-      }
-    } catch (_) {}
-  }
-  refreshMapStats();
-  setInterval(refreshMapStats, 10000);
-  setTimeout(() => map.invalidateSize(), 400);
-})();
-
 if (document.getElementById("newsGrid")) fetchNews();
-if (document.getElementById("trendingGrid")) loadTrending();
-if (document.getElementById("autoPlaylistGrid")) loadPlaylists();
