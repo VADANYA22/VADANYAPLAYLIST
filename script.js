@@ -9,11 +9,15 @@ const DEFAULT_COVER = "logo.png";
 const STORAGE_PLAY = "vadanya-playing";
 const STORAGE_VOL = "vadanya-volume";
 
+/* ===== LOADER ===== */
 (function () {
   document.body.classList.add("is-loading");
   function hideLoader() {
     const el = document.getElementById("pageLoader");
-    if (el) { el.classList.add("is-done"); setTimeout(() => el.remove(), 520); }
+    if (el) {
+      el.classList.add("is-done");
+      setTimeout(() => el.remove(), 520);
+    }
     document.body.classList.remove("is-loading");
   }
   const minTime = new Promise((r) => setTimeout(r, 800));
@@ -25,6 +29,7 @@ const STORAGE_VOL = "vadanya-volume";
   setTimeout(hideLoader, 5000);
 })();
 
+/* ===== THEME ===== */
 (function () {
   const saved = localStorage.getItem("vadanya-theme");
   const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
@@ -35,10 +40,16 @@ const STORAGE_VOL = "vadanya-volume";
 document.getElementById("themeToggle")?.addEventListener("click", () => {
   const root = document.documentElement;
   const isDark = root.getAttribute("data-theme") === "dark";
-  if (isDark) { root.removeAttribute("data-theme"); localStorage.setItem("vadanya-theme", "light"); }
-  else { root.setAttribute("data-theme", "dark"); localStorage.setItem("vadanya-theme", "dark"); }
+  if (isDark) {
+    root.removeAttribute("data-theme");
+    localStorage.setItem("vadanya-theme", "light");
+  } else {
+    root.setAttribute("data-theme", "dark");
+    localStorage.setItem("vadanya-theme", "dark");
+  }
 });
 
+/* ===== NAV MOBILE ===== */
 (function () {
   const toggle = document.getElementById("navToggle");
   const links = document.getElementById("navLinks");
@@ -57,6 +68,7 @@ document.getElementById("themeToggle")?.addEventListener("click", () => {
   });
 })();
 
+/* ===== PLAYER ===== */
 const audio = document.getElementById("cpAudio");
 const btn = document.getElementById("cpPlay");
 const vol = document.getElementById("cpVol");
@@ -77,8 +89,11 @@ function setPlaying(on) {
   btn?.classList.toggle("playing", on);
   miniPlay?.classList.toggle("playing", on);
   vinylDisc?.classList.toggle("is-spinning", on);
-  try { sessionStorage.setItem(STORAGE_PLAY, on ? "1" : "0"); } catch (_) {}
+  try {
+    sessionStorage.setItem(STORAGE_PLAY, on ? "1" : "0");
+  } catch (_) {}
 }
+
 function setTrack(title, artist) {
   const t = title || "Vadanya Radio";
   const a = artist || "Live";
@@ -90,20 +105,26 @@ function setTrack(title, artist) {
   if (miniArtist) miniArtist.textContent = a;
   updateMediaSession();
 }
+
 function setCover(url) {
   const src = url || DEFAULT_COVER;
   currentMeta.cover = src;
   const apply = (el) => {
     if (!el) return;
     const img = new Image();
-    img.onload = () => { el.src = src; };
-    img.onerror = () => { el.src = DEFAULT_COVER; };
+    img.onload = () => {
+      el.src = src;
+    };
+    img.onerror = () => {
+      el.src = DEFAULT_COVER;
+    };
     img.src = src;
   };
   apply(cpArt);
   apply(miniArt);
   updateMediaSession();
 }
+
 function updateMediaSession() {
   if (!("mediaSession" in navigator)) return;
   try {
@@ -116,22 +137,34 @@ function updateMediaSession() {
         { src: DEFAULT_COVER, sizes: "96x96", type: "image/png" }
       ]
     });
-    navigator.mediaSession.playbackState = audio && !audio.paused ? "playing" : "paused";
+    navigator.mediaSession.playbackState =
+      audio && !audio.paused ? "playing" : "paused";
   } catch (_) {}
 }
+
 function parseNow(raw) {
   const t = (raw || "").trim();
   if (!t) return null;
   const i = t.indexOf(" - ");
-  if (i > -1) return { artist: t.slice(0, i).trim(), title: t.slice(i + 3).trim() };
+  if (i > -1) {
+    return {
+      artist: t.slice(0, i).trim().replace(/;/g, ","),
+      title: t.slice(i + 3).trim()
+    };
+  }
   return { artist: "Vadanya Radio", title: t };
 }
+
 async function fetchCover(title, artist) {
   const q = `${artist} ${title}`.trim();
   if (!q) return null;
   if (coverCache.has(q)) return coverCache.get(q);
   try {
-    const res = await fetch("https://itunes.apple.com/search?term=" + encodeURIComponent(q) + "&media=music&entity=song&limit=1");
+    const res = await fetch(
+      "https://itunes.apple.com/search?term=" +
+        encodeURIComponent(q) +
+        "&media=music&entity=song&limit=1"
+    );
     if (!res.ok) return null;
     const data = await res.json();
     const item = data.results?.[0];
@@ -139,8 +172,11 @@ async function fetchCover(title, artist) {
     const art = item.artworkUrl100.replace(/\/\d+x\d+bb\./, "/400x400bb.");
     coverCache.set(q, art);
     return art;
-  } catch (_) { return null; }
+  } catch (_) {
+    return null;
+  }
 }
+
 async function updateNowPlaying(raw) {
   const parsed = parseNow(raw);
   if (!parsed) return;
@@ -153,6 +189,7 @@ async function updateNowPlaying(raw) {
   const cover = await fetchCover(title, artist);
   if (cover) setCover(cover);
 }
+
 async function pollNow() {
   try {
     const r = await fetch("/nowplaying?t=" + Date.now(), { cache: "no-store" });
@@ -162,6 +199,7 @@ async function pollNow() {
     }
   } catch (_) {}
 }
+
 function getSavedVolume() {
   try {
     const v = parseFloat(sessionStorage.getItem(STORAGE_VOL));
@@ -169,12 +207,21 @@ function getSavedVolume() {
   } catch (_) {}
   return 0.85;
 }
+
 function saveVolume(v) {
-  try { sessionStorage.setItem(STORAGE_VOL, String(v)); } catch (_) {}
+  try {
+    sessionStorage.setItem(STORAGE_VOL, String(v));
+  } catch (_) {}
 }
+
 function wasPlaying() {
-  try { return sessionStorage.getItem(STORAGE_PLAY) === "1"; } catch (_) { return false; }
+  try {
+    return sessionStorage.getItem(STORAGE_PLAY) === "1";
+  } catch (_) {
+    return false;
+  }
 }
+
 function start() {
   if (!audio) return;
   const sep = STREAM_URL.includes("?") ? "&" : "?";
@@ -185,27 +232,48 @@ function start() {
   audio.volume = v;
   if (vol) vol.value = v;
   if (miniVol) miniVol.value = v;
-  audio.play()
-    .then(() => { setPlaying(true); updateMediaSession(); pollNow(); })
-    .catch(() => { setPlaying(false); setTrack("Vadanya Radio", "Tap play untuk mulai"); });
+  audio
+    .play()
+    .then(() => {
+      setPlaying(true);
+      updateMediaSession();
+      pollNow();
+    })
+    .catch(() => {
+      setPlaying(false);
+      setTrack("Vadanya Radio", "Tap play untuk mulai");
+    });
 }
+
 function stop() {
   if (!audio) return;
   audio.pause();
   setPlaying(false);
   updateMediaSession();
 }
+
 function syncVolume(fromMini) {
   if (!audio) return;
   let v;
-  if (fromMini && miniVol) { v = +miniVol.value; if (vol) vol.value = v; }
-  else if (vol) { v = +vol.value; if (miniVol) miniVol.value = v; }
-  else return;
+  if (fromMini && miniVol) {
+    v = +miniVol.value;
+    if (vol) vol.value = v;
+  } else if (vol) {
+    v = +vol.value;
+    if (miniVol) miniVol.value = v;
+  } else return;
   audio.volume = v;
   saveVolume(v);
 }
-btn?.addEventListener("click", () => { if (audio && !audio.paused) stop(); else start(); });
-miniPlay?.addEventListener("click", () => { if (audio && !audio.paused) stop(); else start(); });
+
+btn?.addEventListener("click", () => {
+  if (audio && !audio.paused) stop();
+  else start();
+});
+miniPlay?.addEventListener("click", () => {
+  if (audio && !audio.paused) stop();
+  else start();
+});
 vol?.addEventListener("input", () => syncVolume(false));
 miniVol?.addEventListener("input", () => syncVolume(true));
 
@@ -228,18 +296,22 @@ if ("mediaSession" in navigator) {
 pollNow();
 setInterval(pollNow, 5000);
 
+/* ===== LISTENERS ===== */
 const listenersCount = document.getElementById("listenersCount");
 async function pollListeners() {
   try {
     const r = await fetch("/listeners?t=" + Date.now(), { cache: "no-store" });
     if (!r.ok) return;
     const data = await r.json();
-    if (listenersCount && data.ok) listenersCount.textContent = String(data.listeners ?? 0);
+    if (listenersCount && data.ok) {
+      listenersCount.textContent = String(data.listeners ?? 0);
+    }
   } catch (_) {}
 }
 pollListeners();
 setInterval(pollListeners, 15000);
 
+/* ===== NEWS ===== */
 async function fetchNews() {
   const el = document.getElementById("newsGrid");
   if (!el) return;
@@ -257,31 +329,137 @@ async function fetchNews() {
         const it = items[i];
         const desc = it.querySelector("description")?.textContent || "";
         let imgEl = it.querySelector("content[url], thumbnail[url], enclosure[url]");
-        const image = imgEl ? imgEl.getAttribute("url") : (desc.match(/<img[^>]+src=["']([^"']+)["']/i) || [])[1] || "logo.png";
+        const image = imgEl
+          ? imgEl.getAttribute("url")
+          : (desc.match(/<img[^>]+src=["']([^"']+)["']/i) || [])[1] || "logo.png";
         news.push({
           title: it.querySelector("title")?.textContent?.trim() || "Tanpa judul",
           link: it.querySelector("link")?.textContent?.trim() || "#",
           pubDate: it.querySelector("pubDate")?.textContent?.trim() || "",
-          desc, image
+          desc,
+          image
         });
       }
-      el.innerHTML = news.map((n) => {
-        const tmp = document.createElement("div");
-        tmp.innerHTML = n.desc;
-        const excerpt = (tmp.textContent || "").slice(0, 120);
-        let date = "";
-        try {
-          const d = new Date(n.pubDate);
-          if (!isNaN(d.getTime())) {
-            const m = ["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Ags","Sep","Okt","Nov","Des"];
-            date = `${d.getDate()} ${m[d.getMonth()]} ${d.getFullYear()}`;
-          }
-        } catch (_) {}
-        return `<a class="news-card" href="${n.link}" target="_blank" rel="noopener"><img class="news-thumb" src="${n.image}" alt="" loading="lazy" onerror="this.src='logo.png'" /><div class="news-body">${date ? `<span class="news-date">${date}</span>` : ""}<h3 class="news-title">${n.title}</h3><p class="news-excerpt">${excerpt}…</p><span class="news-more">Baca selengkapnya →</span></div></a>`;
-      }).join("");
+      el.innerHTML = news
+        .map((n) => {
+          const tmp = document.createElement("div");
+          tmp.innerHTML = n.desc;
+          const excerpt = (tmp.textContent || "").slice(0, 120);
+          let date = "";
+          try {
+            const d = new Date(n.pubDate);
+            if (!isNaN(d.getTime())) {
+              const m = [
+                "Jan", "Feb", "Mar", "Apr", "Mei", "Jun",
+                "Jul", "Ags", "Sep", "Okt", "Nov", "Des"
+              ];
+              date = `${d.getDate()} ${m[d.getMonth()]} ${d.getFullYear()}`;
+            }
+          } catch (_) {}
+          return `<a class="news-card" href="${n.link}" target="_blank" rel="noopener"><img class="news-thumb" src="${n.image}" alt="" loading="lazy" onerror="this.src='logo.png'" /><div class="news-body">${date ? `<span class="news-date">${date}</span>` : ""}<h3 class="news-title">${n.title}</h3><p class="news-excerpt">${excerpt}…</p><span class="news-more">Baca selengkapnya →</span></div></a>`;
+        })
+        .join("");
       return;
-    } catch (err) { lastError = err; }
+    } catch (err) {
+      lastError = err;
+    }
   }
   el.innerHTML = `<div class="news-error">Gagal memuat berita.<br /><small>${lastError?.message || ""}</small></div>`;
 }
+
+/* ===== HISTORY + CHART ===== */
+function formatTs(ts, timeLabel) {
+  if (timeLabel) return timeLabel;
+  if (!ts) return "—";
+  try {
+    const d = new Date(ts);
+    const pad = (n) => String(n).padStart(2, "0");
+    return `${pad(d.getDate())}/${pad(d.getMonth() + 1)} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  } catch {
+    return "—";
+  }
+}
+
+async function loadHistory() {
+  const el = document.getElementById("historyList");
+  const status = document.getElementById("historyStatus");
+  if (!el) return;
+  el.innerHTML = `<div class="news-loading">Memuat riwayat…</div>`;
+  try {
+    const r = await fetch("/history?limit=80&t=" + Date.now(), { cache: "no-store" });
+    const text = await r.text();
+    if (text.trim().startsWith("<")) throw new Error("Function /history belum deploy");
+    const data = JSON.parse(text);
+    if (!data.ok) throw new Error(data.error || "Gagal");
+    if (status) {
+      status.textContent = data.kv
+        ? "Log tersimpan di server (KV)."
+        : data.warning || "Mode buffer server saja.";
+    }
+    const plays = data.plays || [];
+    if (!plays.length) {
+      el.innerHTML = `<div class="news-error">Belum ada riwayat. Biarkan radio on-air, lalu refresh.</div>`;
+      return;
+    }
+    el.innerHTML = plays
+      .map(
+        (p) => `
+      <div class="history-item">
+        <div class="history-time">${formatTs(p.ts, p.timeLabel)}</div>
+        <div class="history-info">
+          <div class="history-title">${(p.title || "Unknown").replace(/</g, "&lt;")}</div>
+          <div class="history-artist">${(p.artist || "").replace(/</g, "&lt;")}</div>
+        </div>
+      </div>`
+      )
+      .join("");
+  } catch (err) {
+    el.innerHTML = `<div class="news-error">Gagal memuat history.<br /><small>${err.message}</small></div>`;
+  }
+}
+
+async function loadLiveChart() {
+  const el = document.getElementById("chartList");
+  const meta = document.getElementById("chartMeta");
+  if (!el) return;
+  el.innerHTML = `<div class="news-loading">Memuat chart…</div>`;
+  try {
+    await fetch("/history?limit=1&t=" + Date.now(), { cache: "no-store" }).catch(() => {});
+    const r = await fetch("/chart?t=" + Date.now(), { cache: "no-store" });
+    const text = await r.text();
+    if (text.trim().startsWith("<")) throw new Error("Function /chart belum deploy");
+    const data = JSON.parse(text);
+    if (!data.ok) throw new Error(data.error || "Gagal");
+    if (meta) {
+      meta.textContent = `7 hari terakhir · ${data.totalPlays || 0} putaran · ${data.uniqueSongs || 0} lagu unik`;
+    }
+    const songs = data.songs || [];
+    if (!songs.length) {
+      el.innerHTML = `<div class="news-error">Chart masih kosong. Butuh log putaran (KV aktif + radio on-air).</div>`;
+      return;
+    }
+    el.innerHTML = songs
+      .map(
+        (s) => `
+      <div class="chart-item">
+        <div class="chart-rank">${String(s.rank).padStart(2, "0")}</div>
+        <div class="chart-info">
+          <div class="chart-title">${(s.title || "").replace(/</g, "&lt;")}</div>
+          <div class="chart-artist">${(s.artist || "").replace(/</g, "&lt;")}</div>
+        </div>
+        <div class="chart-count">${s.count}x</div>
+      </div>`
+      )
+      .join("");
+  } catch (err) {
+    el.innerHTML = `<div class="news-error">Gagal memuat chart.<br /><small>${err.message}</small></div>`;
+  }
+}
+
 if (document.getElementById("newsGrid")) fetchNews();
+if (document.getElementById("historyList")) loadHistory();
+if (document.getElementById("chartList")) loadLiveChart();
+
+setInterval(() => {
+  fetch("/history?limit=1&t=" + Date.now(), { cache: "no-store" }).catch(() => {});
+}, 45000);

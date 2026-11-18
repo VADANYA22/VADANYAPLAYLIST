@@ -8,15 +8,30 @@ export async function onRequest() {
     const song = (data.songtitle || "").trim();
     if (song) {
       return new Response(JSON.stringify({ nowplaying: song, ok: true }), {
-        headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*", "Cache-Control": "no-store" }
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+          "Cache-Control": "no-store"
+        }
       });
     }
   } catch (e) {
-    return new Response(JSON.stringify({ nowplaying: "Vadanya Radio - Live", ok: false, error: String(e) }), {
-      headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*", "Cache-Control": "no-store" }
-    });
+    return new Response(
+      JSON.stringify({ nowplaying: "Vadanya Radio - Live", ok: false, error: String(e) }),
+      {
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+          "Cache-Control": "no-store"
+        }
+      }
+    );
   }
   return new Response(JSON.stringify({ nowplaying: "Vadanya Radio - Live", ok: false }), {
-    headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*", "Cache-Control": "no-store" }
+    headers: {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "*",
+      "Cache-Control": "no-store"
+    }
   });
 }
