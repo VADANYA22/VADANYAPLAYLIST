@@ -367,7 +367,7 @@ async function fetchNews() {
   el.innerHTML = `<div class="news-error">Gagal memuat berita.<br /><small>${lastError?.message || ""}</small></div>`;
 }
 
-/* ===== HISTORY + CHART ===== */
+/* ===== HISTORY + CHART (pakai /api/...) ===== */
 function formatTs(ts, timeLabel) {
   if (timeLabel) return timeLabel;
   if (!ts) return "—";
@@ -386,9 +386,9 @@ async function loadHistory() {
   if (!el) return;
   el.innerHTML = `<div class="news-loading">Memuat riwayat…</div>`;
   try {
-    const r = await fetch("/history?limit=80&t=" + Date.now(), { cache: "no-store" });
+    const r = await fetch("/api/history?limit=80&t=" + Date.now(), { cache: "no-store" });
     const text = await r.text();
-    if (text.trim().startsWith("<")) throw new Error("Function /history belum deploy");
+    if (text.trim().startsWith("<")) throw new Error("Function /api/history belum deploy");
     const data = JSON.parse(text);
     if (!data.ok) throw new Error(data.error || "Gagal");
     if (status) {
@@ -424,10 +424,10 @@ async function loadLiveChart() {
   if (!el) return;
   el.innerHTML = `<div class="news-loading">Memuat chart…</div>`;
   try {
-    await fetch("/history?limit=1&t=" + Date.now(), { cache: "no-store" }).catch(() => {});
-    const r = await fetch("/chart?t=" + Date.now(), { cache: "no-store" });
+    await fetch("/api/history?limit=1&t=" + Date.now(), { cache: "no-store" }).catch(() => {});
+    const r = await fetch("/api/chart?t=" + Date.now(), { cache: "no-store" });
     const text = await r.text();
-    if (text.trim().startsWith("<")) throw new Error("Function /chart belum deploy");
+    if (text.trim().startsWith("<")) throw new Error("Function /api/chart belum deploy");
     const data = JSON.parse(text);
     if (!data.ok) throw new Error(data.error || "Gagal");
     if (meta) {
@@ -461,5 +461,5 @@ if (document.getElementById("historyList")) loadHistory();
 if (document.getElementById("chartList")) loadLiveChart();
 
 setInterval(() => {
-  fetch("/history?limit=1&t=" + Date.now(), { cache: "no-store" }).catch(() => {});
+  fetch("/api/history?limit=1&t=" + Date.now(), { cache: "no-store" }).catch(() => {});
 }, 45000);
